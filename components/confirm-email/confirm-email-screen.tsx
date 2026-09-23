@@ -16,6 +16,7 @@ export function ConfirmEmailScreen() {
   const token = searchParams.get("token")?.trim() ?? "";
   const [state, setState] = useState<ScreenState>("loading");
   const [message, setMessage] = useState<string>();
+  const [expired, setExpired] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const visibleState: ScreenState = isUsableConfirmationToken(token)
     ? state
@@ -32,6 +33,7 @@ export function ConfirmEmailScreen() {
       .then((result) => {
         setState(result.state);
         setMessage(result.message);
+        setExpired(result.expired ?? false);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -39,6 +41,7 @@ export function ConfirmEmailScreen() {
         }
         setState("unexpected-error");
         setMessage("Não foi possível confirmar seu e-mail agora.");
+        setExpired(false);
       });
 
     return () => controller.abort();
@@ -46,6 +49,7 @@ export function ConfirmEmailScreen() {
 
   const retry = () => {
     setMessage(undefined);
+    setExpired(false);
     setState("loading");
     setAttempt((current) => current + 1);
   };
@@ -99,6 +103,7 @@ export function ConfirmEmailScreen() {
             <MessageState
               title="Link incompleto"
               description="Este link de confirmação não tem um token válido. Solicite um novo link para continuar."
+              action={null}
             />
           )}
 
@@ -106,7 +111,7 @@ export function ConfirmEmailScreen() {
             <MessageState
               title="Não foi possível confirmar"
               description={message ?? "Este link é inválido, expirou ou já foi utilizado."}
-              action={<LinkAction href="/login" label="Voltar para o login" />}
+              action={expired ? null : <LinkAction href="/login" label="Voltar para o login" />}
             />
           )}
 

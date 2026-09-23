@@ -6,6 +6,7 @@ export type ConfirmationState =
 export type ConfirmationResult = {
   state: ConfirmationState;
   message?: string;
+  expired?: boolean;
 };
 
 const fallbackErrorMessage = "Não foi possível confirmar seu e-mail agora.";
@@ -53,6 +54,26 @@ function readMessage(body: unknown): string | undefined {
   return undefined;
 }
 
+export function isExpiredConfirmationError(body: unknown): boolean {
+  if (!body || typeof body !== "object") {
+    return false;
+  }
+
+  const record = body as Record<string, unknown>;
+  const error = record.error;
+  const code =
+    error && typeof error === "object"
+      ? (error as Record<string, unknown>).code
+      : record.code;
+  const message = readMessage(body)?.toLocaleLowerCase("pt-BR");
+
+  return (
+    code === "TOKEN_EXPIRED" ||
+    message?.includes("expirou") === true ||
+    message?.includes("expired") === true
+  );
+}
+
 export function getConfirmationErrorMessage(
   body: unknown,
   token?: string,
@@ -83,5 +104,9 @@ export async function confirmEmail(
   const state = getConfirmationState(response.status);
   return state === "success"
     ? { state }
-    : { state, message: getConfirmationErrorMessage(body, token) };
+    : {
+        state,
+        message: getConfirmationErrorMessage(body, token),
+        expired: isExpiredConfirmationError(body),
+      };
 }

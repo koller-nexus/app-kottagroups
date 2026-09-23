@@ -16,7 +16,6 @@ export function ConfirmEmailScreen() {
   const token = searchParams.get("token")?.trim() ?? "";
   const [state, setState] = useState<ScreenState>("loading");
   const [message, setMessage] = useState<string>();
-  const [expired, setExpired] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const visibleState: ScreenState = isUsableConfirmationToken(token)
     ? state
@@ -33,7 +32,6 @@ export function ConfirmEmailScreen() {
       .then((result) => {
         setState(result.state);
         setMessage(result.message);
-        setExpired(result.expired ?? false);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -41,7 +39,6 @@ export function ConfirmEmailScreen() {
         }
         setState("unexpected-error");
         setMessage("Não foi possível confirmar seu e-mail agora.");
-        setExpired(false);
       });
 
     return () => controller.abort();
@@ -49,7 +46,6 @@ export function ConfirmEmailScreen() {
 
   const retry = () => {
     setMessage(undefined);
-    setExpired(false);
     setState("loading");
     setAttempt((current) => current + 1);
   };
@@ -88,13 +84,14 @@ export function ConfirmEmailScreen() {
                 E-mail confirmado
               </h1>
               <p className="mt-4 text-base leading-7 text-kotta-muted">
-                Sua conta está pronta. Entre para começar a organizar seus grupos.
+                Sua conta está pronta. Abra o app Kotta Groups para entrar e
+                começar a organizar seus grupos.
               </p>
               <Link
-                href="/login"
+                href="/"
                 className="mt-8 inline-flex min-h-12 items-center justify-center rounded-control bg-kotta-primary px-6 font-semibold text-white transition-colors hover:bg-kotta-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
               >
-                Ir para o login
+                Voltar ao início
               </Link>
             </div>
           )}
@@ -111,7 +108,6 @@ export function ConfirmEmailScreen() {
             <MessageState
               title="Não foi possível confirmar"
               description={message ?? "Este link é inválido, expirou ou já foi utilizado."}
-              action={expired ? null : <LinkAction href="/login" label="Voltar para o login" />}
             />
           )}
 
@@ -131,7 +127,7 @@ export function ConfirmEmailScreen() {
 function MessageState({
   title,
   description,
-  action = <LinkAction href="/login" label="Voltar para o login" />,
+  action = null,
 }: {
   title: string;
   description: string;
@@ -142,18 +138,7 @@ function MessageState({
       <div className="mb-5 size-10 rounded-full bg-kotta-danger-bg" aria-hidden="true" />
       <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">{title}</h1>
       <p className="mt-4 max-w-md text-base leading-7 text-kotta-muted">{description}</p>
-      <div className="mt-8">{action}</div>
+      {action ? <div className="mt-8">{action}</div> : null}
     </div>
-  );
-}
-
-function LinkAction({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="primary-action"
-    >
-      {label}
-    </Link>
   );
 }

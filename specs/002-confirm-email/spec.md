@@ -21,7 +21,7 @@ Como uma pessoa que acabou de se cadastrar, quero abrir o link recebido por e-ma
 **Acceptance Scenarios**:
 
 1. **Given** uma URL com `token` e um token válido, **When** a tela é aberta, **Then** o token é enviado no corpo da requisição de confirmação sem aparecer na interface ou em logs.
-2. **Given** uma resposta de sucesso do serviço, **When** a confirmação termina, **Then** a tela informa claramente que a conta foi confirmada e oferece uma ação para ir ao login.
+2. **Given** uma resposta de sucesso do serviço, **When** a confirmação termina, **Then** a tela informa que a conta foi confirmada e oferece voltar ao início, sem apontar para login.
 
 ### User Story 2 - Recuperar falhas de confirmação (Priority: P1)
 
@@ -65,8 +65,8 @@ Como uma pessoa que abriu o link, quero saber que a confirmação está sendo pr
 - **FR-003**: Quando houver um token não vazio, o sistema MUST enviar uma requisição `POST /api/v1/auth/confirm-email` com `{ "token": "<token>" }` no corpo.
 - **FR-004**: O sistema MUST exibir estados distintos de carregamento, sucesso, token ausente, token inválido/expirado/já utilizado e erro inesperado.
 - **FR-005**: A mensagem para falhas esperadas MUST respeitar o envelope e o texto retornados pelo serviço quando esses dados estiverem disponíveis.
-- **FR-006**: Após uma confirmação bem-sucedida, o sistema MUST oferecer uma ação explícita para navegar ao login.
-- **FR-007**: Após uma falha recuperável, o sistema MUST oferecer uma ação de recuperação, como tentar novamente ou retornar ao fluxo de acesso.
+- **FR-006**: Após uma confirmação bem-sucedida, o sistema MUST orientar o uso do app e oferecer uma ação para voltar ao início. O sistema MUST NOT apontar para `/login`.
+- **FR-007**: Após uma falha inesperada, o sistema MUST oferecer tentar novamente. Falhas de token ausente, inválido, expirado ou já utilizado MUST explicar o ocorrido sem CTA de login.
 - **FR-008**: O sistema MUST NOT registrar, renderizar ou incluir o token em mensagens, analytics ou logs do cliente.
 - **FR-009**: A tela MUST permanecer utilizável por teclado, leitores de tela e telas estreitas, com estados comunicados semanticamente.
 
@@ -82,13 +82,13 @@ Como uma pessoa que abriu o link, quero saber que a confirmação está sendo pr
 - **SC-001**: 100% dos links válidos testados confirmam a conta sem exigir uma segunda ação além de abrir o link.
 - **SC-002**: 100% dos casos de token ausente, inválido, expirado ou já utilizado exibem uma orientação de recuperação compreensível.
 - **SC-003**: A tela apresenta feedback de carregamento imediatamente após a abertura do link, sem iniciar chamadas duplicadas durante uma mesma tentativa.
-- **SC-004**: Em testes de teclado e leitor de tela, todas as ações de recuperação e login são identificáveis e acionáveis.
+- **SC-004**: Em testes de teclado e leitor de tela, as ações existentes (início, tentar novamente) são identificáveis e acionáveis.
 - **SC-005**: O token nunca aparece no texto visível da tela, nos destinos de navegação ou nos registros produzidos pelo fluxo.
 
 ## Assumptions
 
 - O browser chama o caminho relativo `/api/v1/auth/confirm-email`. Em produção esse caminho é reescrito para `https://api.kottagroups.com.br/api/v1/...` (origem configurável via `API_ORIGIN`), porque a API não está no mesmo host da landing e não libera CORS para o domínio público.
 - O serviço pode devolver mensagens em envelopes de erro; a interface usará a mensagem segura retornada quando ela estiver disponível.
-- O destino de login é `/login`, mesmo que a tela de login seja entregue em uma etapa posterior do produto.
+- Não existe tela de login neste site; o acesso autenticado acontece no app.
 - A confirmação é uma ação pública e não exige sessão previamente autenticada.
-- O fluxo não cria um novo formulário de cadastro ou reenvio de e-mail nesta entrega; a recuperação aponta para o acesso/login.
+- O fluxo não cria um novo formulário de cadastro ou reenvio de e-mail nesta entrega.

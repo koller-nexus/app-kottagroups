@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test lib/money.test.mjs"
+    "test": "node --experimental-strip-types --test lib/*.test.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

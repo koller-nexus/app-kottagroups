@@ -32,3 +32,36 @@ body {
   color: #3d3d3d;
   font-family: var(--font-dm-sans), sans-serif;
 }
+
+.primary-action {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background: var(--color-kotta-primary);
+  padding-inline: 1.5rem;
+  font-weight: 600;
+  color: white;
+  transition: background-color 150ms ease;
+}
+
+.primary-action:hover {
+  background: var(--color-kotta-accent);
+}
+
+.primary-action:focus-visible {
+  outline: 2px solid var(--color-kotta-primary);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

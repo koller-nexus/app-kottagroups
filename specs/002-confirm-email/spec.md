@@ -87,7 +87,7 @@ Como uma pessoa que abriu o link, quero saber que a confirmação está sendo pr
 
 ## Assumptions
 
-- O endpoint de confirmação está disponível no mesmo domínio da aplicação pública e aceita o caminho relativo `/api/v1/auth/confirm-email`.
+- O browser chama o caminho relativo `/api/v1/auth/confirm-email`. Em produção esse caminho é reescrito para `https://api.kottagroups.com.br/api/v1/...` (origem configurável via `API_ORIGIN`), porque a API não está no mesmo host da landing e não libera CORS para o domínio público.
 - O serviço pode devolver mensagens em envelopes de erro; a interface usará a mensagem segura retornada quando ela estiver disponível.
 - O destino de login é `/login`, mesmo que a tela de login seja entregue em uma etapa posterior do produto.
 - A confirmação é uma ação pública e não exige sessão previamente autenticada.

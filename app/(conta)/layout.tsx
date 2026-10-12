@@ -35,7 +35,7 @@ export default async function ContaLayout({ children }: LayoutProps<"/">) {
           <Avatar person={me} />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold text-kotta-text">{me.name}</span>
-            <span className="block truncate font-mono text-[11px] text-kotta-muted">{me.email}</span>
+            <span className="block truncate text-xs text-kotta-muted">{me.email}</span>
           </span>
         </Link>
       </aside>

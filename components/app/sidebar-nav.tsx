@@ -46,8 +46,8 @@ export function SidebarNav({ groupLinks }: { groupLinks: GroupLink[] }) {
       </ul>
 
       <div>
-        <p className="px-3 font-mono text-[11px] font-medium tracking-widest text-kotta-muted">
-          SEUS GRUPOS
+        <p className="px-3 text-[13px] font-semibold text-kotta-muted">
+          Seus grupos
         </p>
         <ul className="mt-2 flex flex-col gap-0.5">
           {groupLinks.map((group) => {

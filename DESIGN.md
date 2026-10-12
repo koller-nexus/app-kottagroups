@@ -1,95 +1,80 @@
 ---
-version: "kotta-2026-08-green"
-name: "Kotta — tema verde Super Putt"
-description: "Tema inspirado no site Super Putt (visual golf-premium): verde profundo #1a5c38, fundos brancos e #f7f9f8, Playfair Display para títulos e DM Sans para corpo. Adaptado para o app mobile React Native Kotta."
+version: "kotta-2026-10-jardim"
+name: "Kotta — Jardim"
+description: "Mesmo sistema do app mobile (mobile-kottagroups/DESIGN.md): campo verde-jardim em destaque sobre fundo leaf mist, fonte da plataforma, valores leves e uma única curva."
 colors:
-  primary: "#1a5c38"
-  accent: "#2e8b57"
-  secondary: "#1a1a1a"
-  background: "#f7f9f8"
-  surface: "#FFFFFF"
-  light-green: "#edf7f1"
-  text-primary: "#3d3d3d"
-  text-secondary: "#6B7280"
-  border: "#d8e6df"
+  garden-green: "#2F6B4F"
+  garden-green-deep: "#234F3B"
+  leaf-field: "#DCEADF"
+  on-green-muted: "#CFE3D5"
+  on-green-owes: "#FFD9CC"
+  leaf-mist: "#F1F4EE"
+  leaf-line: "#DCE3DC"
+  leaf-line-strong: "#BFCBC1"
+  muted: "#56665C"
+  ink: "#18211C"
+  terracotta: "#A4492A"
+  sand-rose: "#F6E6DE"
+  white: "#FFFFFF"
 typography:
-  display:
-    fontFamily: "Playfair Display"
-    weights: [400, 500, 600, 700]
-  body:
-    fontFamily: "DM Sans"
-    weights: [400, 500, 600, 700, 800]
-  mono:
-    fontFamily: "DM Mono"
-    weights: [400, 500]
-spacing:
-  base: "8px"
-  gap: "16px"
-  card-padding: "24px"
+  face: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, Roboto, sans-serif"
+  amount: { fontWeight: 300 }
+  title: { fontWeight: 700 }
+  body: { fontWeight: 400 }
+  label: { fontSize: "13px", fontWeight: 600 }
+  key: { fontFamily: "DM Mono", fontWeight: 500 }
 rounded:
-  card: "24px"
+  card: "16px"
   control: "12px"
-  pill: "9999px"
+  sweep: "96px"
+spacing: [4, 8, 12, 16, 20, 24, 32, 48]
 ---
-# KOTTA — design system
 
-App de divisão de gastos em grupo (estilo Splitwise), focado no público brasileiro. Sem backend — dados mockados em memória em `src/data/mock.ts`.
+# Kotta — Jardim (web)
 
-Visual inspirado na referência "Super Putt" (site de golfe, verde premium) adaptado pra mobile. WebGL, motion e efeitos web da referência não se aplicam ao React Native — só a linguagem visual (cores, tipografia, radius).
+A web segue o **mesmo design system do app mobile** (`mobile-kottagroups/DESIGN.md`, decisão de 2026-10-07). Se os dois divergirem, o do mobile vale e este arquivo deve ser atualizado.
+
+Tokens em `app/globals.css` (classes `kotta-*` do Tailwind) e `lib/theme.ts`.
 
 ## Cores
 
 | Token | Valor | Uso |
 |---|---|---|
-| `primary` | `#1a5c38` | verde profundo — botões, FAB, chips ativos, destaques |
-| `accent` | `#2e8b57` | verde médio — variações e rótulos |
-| `light-green` | `#edf7f1` | badges, círculos, fundos suaves |
-| `background` | `#f7f9f8` | fundo de telas (quase branco) |
-| `surface` | `#FFFFFF` | cards / painéis |
-| `text-primary` | `#3d3d3d` | texto principal |
-| `text-secondary` | `#6B7280` | texto secundário |
-| `border` | `#d8e6df` | bordas de cards e controles |
-
-Semânticos: `success #1a5c38` (recebe), `danger #C93A3A` (deve) com fundos `#edf7f1` e `rgba(201,58,58,0.10)`.
+| `kotta-primary` | `#2F6B4F` garden green | campo herói, ações primárias, item ativo, "recebe" |
+| `kotta-primary-deep` | `#234F3B` | hover/pressed de tudo que é verde |
+| `kotta-light-green` | `#DCEADF` leaf field | botões tonais, item selecionado, chip "recebe" |
+| `kotta-on-field-muted` | `#CFE3D5` | rótulos sobre o campo verde |
+| `kotta-on-field-owes` | `#FFD9CC` | "deve" sobre o campo verde |
+| `kotta-bg` | `#F1F4EE` leaf mist | fundo das telas |
+| `kotta-surface` | `#FFFFFF` | folhas brancas, inputs |
+| `kotta-text` | `#18211C` ink | texto principal, títulos |
+| `kotta-muted` | `#56665C` | texto secundário, rótulos |
+| `kotta-border` | `#DCE3DC` leaf line | divisórias, trilhos |
+| `kotta-border-strong` | `#BFCBC1` | bordas de input, barra do mês passado |
+| `kotta-danger` | `#A4492A` terracotta | **só** "deve", ações destrutivas e erros |
+| `kotta-danger-bg` | `#F6E6DE` sand rose | chip "deve", fundo de erro |
 
 ## Tipografia
 
-- Display (títulos, nome do app): **Playfair Display** (700).
-- Corpo: **DM Sans** (400–800).
-- Labels e valores monetários: **DM Mono** (metadados técnicos).
+- Fonte da plataforma (SF Pro no Apple, Segoe/Roboto nos demais). Não carregar fontes de UI.
+- DM Mono só para chave Pix e códigos.
+- Valores em reais sempre com `components/app/price.tsx`: reais grandes e leves (300 a partir de 20px), R$ e centavos com metade do tamanho, números tabulares.
+- Títulos 700; título de linha 600 16px; rótulo 600 13px em frase. **Sem rótulos em caixa alta.**
 
-## Layout
+## Formas e layout
 
-- Fundo `#f7f9f8` com cards brancos (`surface`) e borda `#d8e6df` sutil.
-- Radius: card `24px`, control `12px`, pill `9999px`. Botões/cards/badges alinhados na mesma linguagem de radius.
-- Headers e tab bar brancos, status bar escura.
-- Botões/FAB: `primary` com texto branco.
+- Cartões e folhas com raio 16, controles 12, avatares redondos.
+- `components/app/garden-field.tsx`: o campo verde do herói, com canto inferior direito em curva de 96. **Um por tela.**
+- Listas: folha branca com linhas de 68px e divisórias leaf line.
+- Plano: sem sombras em cartões.
+- Botão primário verde com 52px de altura; botão tonal leaf field.
 
-## Estrutura de telas (Expo Router)
+## Painel (`/painel`)
 
-| Rota | Tela |
-|---|---|
-| `app/index.tsx` | Dashboard: topo com botões Entrar/Cadastrar, stats (saldo, recebe, deve, grupos) e listagem dos grupos |
-| `app/auth.tsx` | Auth modal: segmented "Entrar / Cadastrar", formulários de login e cadastro |
-| `app/(tabs)/_layout.tsx` | Tabs: Grupos + Perfil |
-| `app/(tabs)/groups.tsx` | Lista de grupos; card com emoji, nome, nº membros, chip de saldo; FAB (+) |
-| `app/(tabs)/profile.tsx` | Avatar (foto), nome, chave Pix, logout |
-| `app/group/[id].tsx` | Detalhe: sub-abas "Despesas" e "Saldos"; FAB para nova despesa |
-| `app/group/add-expense.tsx` | Modal nova despesa |
-| `app/new-group.tsx` | Modal novo grupo |
-| `app/group/edit.tsx` | Modal editar grupo |
-| `app/group/manage-members.tsx` | Modal gerenciar membros do grupo |
-| `app/group/shopping-list.tsx` | Modal lista de compras e recibos |
-| `app/categories.tsx` | Lista de categorias padrão e personalizadas |
-| `app/category/edit.tsx` | Modal criar/editar categoria personalizada |
-| `app/notifications.tsx` | Modal notificações |
-| `app/profile-edit.tsx` | Modal editar perfil |
+Igual à dashboard do app (`src/screens/Dashboard`), nesta ordem:
 
-## Requisitos técnicos
-
-- TypeScript estrito, `tsc --noEmit` limpo.
-- Componentes reutilizáveis: `Avatar` (foto ou iniciais + cor), `BalanceChip` (chip de saldo colorido).
-- Tema central `src/theme.ts`.
-- Valores monetários sempre em centavos (`amountCents: number`), formatados com `toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })`.
-- `// TODO:` nos pontos onde futuramente entraria API real (login, criar despesa, criar grupo).
-- Interface em pt-BR.
+1. Frase de apoio.
+2. Campo verde: "Seu saldo · a receber/a pagar", "Você recebe" e "Você deve".
+3. Folha "Gastos dos grupos": barras do mês passado e deste mês.
+4. "Últimas quitações": até 3 que envolvem você, com Pago ou Pendente.
+5. "Seus grupos · N": emoji, "N pessoas" e chip de saldo.

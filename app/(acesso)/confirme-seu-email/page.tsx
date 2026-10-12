@@ -15,7 +15,7 @@ export default async function ConfirmeSeuEmailPage() {
 
   return (
     <>
-      <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
+      <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
         Confirme seu e-mail
       </h1>
       <p className="mt-4 text-base leading-7 text-kotta-muted">

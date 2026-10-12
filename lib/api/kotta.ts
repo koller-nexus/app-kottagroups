@@ -4,10 +4,15 @@ import { apiRequest, withQuery } from "@/lib/api/server";
 import type {
   ApiCategory,
   ApiExpense,
+  ApiExpenseDetail,
   ApiGroupDetail,
   ApiGroupSummary,
+  ApiInvoice,
   ApiNotification,
+  ApiReceipt,
   ApiSettlement,
+  ApiShoppingListDetail,
+  ApiShoppingListSummary,
   ApiUser,
   CursorPage,
 } from "@/lib/api/types";
@@ -18,12 +23,12 @@ const MAX_PAGES = 10;
 
 export const getMe = cache(() => apiRequest<ApiUser>("/users/me"));
 
-export const listGroups = cache(async (): Promise<ApiGroupSummary[]> => {
+export const listGroups = cache(async (archived = false): Promise<ApiGroupSummary[]> => {
   const all: ApiGroupSummary[] = [];
   let cursor: string | undefined;
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const result = await apiRequest<CursorPage<ApiGroupSummary>>(
-      withQuery("/groups", { limit: PAGE_LIMIT, cursor }),
+      withQuery("/groups", { limit: PAGE_LIMIT, cursor, archived }),
     );
     all.push(...result.items);
     if (!result.hasMore || !result.nextCursor) break;
@@ -43,11 +48,22 @@ export const listGroupDetails = cache(async (): Promise<ApiGroupDetail[]> => {
 });
 
 export const listExpensesPage = cache(
-  (groupId: string, limit: number = PAGE_LIMIT, cursor?: string) =>
+  (groupId: string, limit: number = PAGE_LIMIT, cursor?: string, category?: string) =>
     apiRequest<CursorPage<ApiExpense>>(
-      withQuery(`/groups/${encodeURIComponent(groupId)}/expenses`, { limit, cursor }),
+      withQuery(`/groups/${encodeURIComponent(groupId)}/expenses`, { limit, cursor, category }),
     ),
 );
+
+export const getExpense = cache((id: string) =>
+  apiRequest<ApiExpenseDetail>(`/expenses/${encodeURIComponent(id)}`),
+);
+
+export const getGroupBalances = cache(async (groupId: string) => {
+  const result = await apiRequest<{ balances: ApiGroupDetail["balances"] }>(
+    `/groups/${encodeURIComponent(groupId)}/balances`,
+  );
+  return result.balances;
+});
 
 /**
  * Despesas do grupo criadas a partir de `sinceIso`. A API devolve da mais
@@ -91,3 +107,25 @@ export const getNotificationCount = cache(async () => {
   const result = await apiRequest<{ count: number }>("/notifications/count");
   return result.count;
 });
+
+export const listShoppingListsPage = cache((groupId: string, cursor?: string) =>
+  apiRequest<CursorPage<ApiShoppingListSummary>>(
+    withQuery(`/groups/${encodeURIComponent(groupId)}/shopping-lists`, { limit: 20, cursor }),
+  ),
+);
+
+export const getShoppingList = cache((id: string) =>
+  apiRequest<ApiShoppingListDetail>(`/shopping-lists/${encodeURIComponent(id)}`),
+);
+
+export const getReceipt = cache((listId: string) =>
+  apiRequest<ApiReceipt>(`/shopping-lists/${encodeURIComponent(listId)}/receipt`),
+);
+
+export const listInvoicesPage = cache((cursor?: string) =>
+  apiRequest<CursorPage<ApiInvoice>>(withQuery("/invoices", { limit: 20, cursor })),
+);
+
+export const getInvoice = cache((id: string) =>
+  apiRequest<ApiInvoice>(`/invoices/${encodeURIComponent(id)}`),
+);

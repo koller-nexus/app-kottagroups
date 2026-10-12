@@ -10,7 +10,8 @@ function apiOrigin(): string {
 type JsonBody = Record<string, unknown> | unknown[];
 
 interface ApiRequestInit extends Omit<RequestInit, "body"> {
-  body?: JsonBody;
+  /** JSON, ou FormData para uploads multipart (o fetch define o boundary). */
+  body?: JsonBody | FormData;
   /** Envia o token da sessão (padrão: true). */
   auth?: boolean;
 }
@@ -27,14 +28,15 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   const token = auth ? await getSessionToken() : undefined;
   if (auth && !token) redirect("/entrar");
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  if (body !== undefined) headers.set("Content-Type", "application/json");
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers.set("Content-Type", "application/json");
 
   let response: Response;
   try {
     response = await fetch(`${apiOrigin()}/api/v1${path}`, {
       ...rest,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined || isForm ? body : JSON.stringify(body),
       cache: "no-store",
     });
   } catch {

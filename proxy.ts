@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Checagem otimista: só olha se o cookie existe. A validade do token é
 // confirmada pela API em cada chamada (lib/api/server.ts).
 const SESSION_COOKIE = "kotta_session";
-const PROTECTED = ["/grupos", "/perfil", "/despesas", "/confirme-seu-email"];
+const PROTECTED = ["/grupos", "/notificacoes", "/notas", "/perfil", "/despesas", "/confirme-seu-email"];
 const GUEST_ONLY = ["/entrar", "/cadastrar"];
 
 function matches(pathname: string, prefixes: string[]): boolean {

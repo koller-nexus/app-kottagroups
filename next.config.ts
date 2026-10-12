@@ -5,6 +5,10 @@ const apiOrigin = (
 ).replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Comprovantes e notas fiscais vão até 10 MiB na API.
+    serverActions: { bodySizeLimit: "11mb" },
+  },
   async rewrites() {
     return [
       {

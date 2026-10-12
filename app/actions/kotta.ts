@@ -2,26 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { apiRequest } from "@/lib/api/server";
 import type { ApiExpense, ApiGroupDetail, ApiSettlement, ApiUser } from "@/lib/api/types";
+import { failure, text, type FormState } from "@/lib/form";
 import { parseAmountToCents } from "@/lib/kotta-view";
 
-export interface FormState {
-  error?: string;
-  ok?: boolean;
-  values?: Record<string, string>;
-}
-
-function text(formData: FormData, key: string): string {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function failure(error: unknown, values?: Record<string, string>): FormState {
-  if (error instanceof ApiError) return { error: friendlyMessage(error.code), values };
-  throw error;
-}
+export type { FormState };
 
 export async function createGroupAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const name = text(formData, "name");
@@ -71,6 +57,15 @@ export async function markSettlementPaidAction(formData: FormData): Promise<void
   if (!settlementId) return;
   await apiRequest<ApiSettlement>(`/settlements/${encodeURIComponent(settlementId)}/paid`, {
     method: "POST",
+  });
+  revalidatePath("/", "layout");
+}
+
+export async function undoSettlementPaidAction(formData: FormData): Promise<void> {
+  const settlementId = text(formData, "settlementId");
+  if (!settlementId) return;
+  await apiRequest<ApiSettlement>(`/settlements/${encodeURIComponent(settlementId)}/paid`, {
+    method: "DELETE",
   });
   revalidatePath("/", "layout");
 }

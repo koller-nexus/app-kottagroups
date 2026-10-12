@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const dmMono = DM_Mono({
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col bg-kotta-bg font-sans text-kotta-text">
         {children}
+        <Analytics />
       </body>
     </html>
   );

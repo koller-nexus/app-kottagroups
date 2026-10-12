@@ -70,8 +70,12 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
       return "Não encontramos o que você procurava.";
     case "SERVICE_UNAVAILABLE":
     case "NETWORK_ERROR":
-      return "O Kotta Groups está fora do ar no momento. Tente de novo em instantes.";
+    case "INTERNAL_ERROR":
+      return `O Kotta Groups está fora do ar no momento. Tente de novo em instantes. (${code})`;
+    case "EDGE_BLOCKED":
+      return "A conexão com o servidor do Kotta Groups foi bloqueada. Tente de novo em instantes. (EDGE_BLOCKED)";
     default:
-      return fallback;
+      // O código ajuda a identificar o problema nos logs.
+      return `${fallback} (${code})`;
   }
 }

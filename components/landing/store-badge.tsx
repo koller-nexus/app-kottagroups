@@ -1,4 +1,4 @@
-import type { StoreKind } from "@/lib/demo-landing";
+export type StoreKind = "app-store" | "play-store";
 
 interface StoreBadgeProps {
   store: StoreKind;

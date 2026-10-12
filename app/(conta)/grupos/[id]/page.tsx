@@ -16,7 +16,14 @@ import { ShoppingListsCard } from "@/components/app/shopping-lists-card";
 import { Price } from "@/components/app/price";
 import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "@/components/app/icons";
 import { PageHeader, SectionLabel } from "@/components/app/page-header";
-import { getGroup, getMe, listCategories, listExpensesPage, listSettlements } from "@/lib/api/kotta";
+import {
+  getGroup,
+  getGroupBalances,
+  getMe,
+  listCategories,
+  listExpensesPage,
+  listSettlements,
+} from "@/lib/api/kotta";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import type { ApiGroupDetail } from "@/lib/api/types";
 import { categoryLookup } from "@/lib/categories";
@@ -59,15 +66,21 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
   const cursor = param(query.cursor);
   const erro = param(query.erro);
 
-  const [me, group, recent, filtered, settlements, categories] = await Promise.all([
+  const [me, group, recent, filtered, settlements, categories, groupBalances] = await Promise.all([
     getMe(),
     loadGroup(id),
     listExpensesPage(id),
     categoria || cursor ? listExpensesPage(id, undefined, cursor, categoria) : null,
     listSettlements(id),
     listCategories(),
+    // Saldos frescos de GET /groups/:id/balances; se falhar, fica o que veio no detalhe.
+    getGroupBalances(id).catch((error) => {
+      if (error instanceof ApiError) return null;
+      throw error;
+    }),
   ]);
   const expensePage = filtered ?? recent;
+  const balances = groupBalances ?? group.balances;
 
   const names = peopleById([group]);
   const category = categoryLookup(categories);
@@ -93,7 +106,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
     const qs = search.toString();
     return qs ? `/grupos/${group.id}?${qs}` : `/grupos/${group.id}`;
   };
-  const myNet = netFor(group.balances, me.id);
+  const myNet = netFor(balances, me.id);
   const open = settlements.filter((s) => !s.paid);
   const done = settlements.filter((s) => s.paid);
   const timeline = groupByMonthAndDay(expensePage.items);
@@ -397,7 +410,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
             <SectionLabel id="membros">Membros</SectionLabel>
             <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
               {group.members.map((member) => {
-                const value = netFor(group.balances, member.id);
+                const value = netFor(balances, member.id);
                 return (
                   <li key={member.id} className="flex items-center gap-3 px-4 py-3">
                     <Avatar person={member} />

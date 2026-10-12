@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form";
 import { safeNextPath } from "@/lib/safe-next";
+import { loginNotice } from "@/lib/session-flow";
 
 export const metadata: Metadata = {
   title: "Entrar — Kotta Groups",
@@ -9,8 +10,7 @@ export const metadata: Metadata = {
 export default async function EntrarPage({ searchParams }: PageProps<"/entrar">) {
   const { next, motivo } = await searchParams;
   const nextPath = safeNextPath(Array.isArray(next) ? next[0] : next);
-  const notice =
-    motivo === "expirada" ? "Sua sessão expirou. Entre de novo para continuar." : undefined;
+  const notice = loginNotice(Array.isArray(motivo) ? motivo[0] : motivo);
 
   return (
     <>

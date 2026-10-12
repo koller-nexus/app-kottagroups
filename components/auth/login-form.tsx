@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { loginAction, type AuthFormState } from "@/app/actions/auth";
 import { Field, FormError } from "@/components/auth/field";
 
@@ -9,6 +9,14 @@ const initialState: AuthFormState = {};
 
 export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  // Depois de um erro, leva o foco ao campo a corrigir.
+  useEffect(() => {
+    if (!state.error) return;
+    (state.fields?.email ? passwordRef : emailRef).current?.focus();
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-5" noValidate>
@@ -20,6 +28,7 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
       <FormError message={state.error} />
       <input type="hidden" name="next" value={next ?? ""} />
       <Field
+        ref={emailRef}
         id="email"
         name="email"
         type="email"
@@ -29,6 +38,7 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
         defaultValue={state.fields?.email}
       />
       <Field
+        ref={passwordRef}
         id="password"
         name="password"
         type="password"

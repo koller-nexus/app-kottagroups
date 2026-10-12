@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArrowLeftIcon } from "@/components/app/icons";
 
 interface PageHeaderProps {
   title: ReactNode;
@@ -7,7 +9,7 @@ interface PageHeaderProps {
   actions?: ReactNode;
 }
 
-export function PageHeader({ title, description, leading, actions }: PageHeaderProps) {
+function PageHeader({ title, description, leading, actions }: PageHeaderProps) {
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex min-w-0 items-start gap-4">
@@ -34,5 +36,32 @@ export function SectionLabel({ children, id }: { children: ReactNode; id?: strin
     >
       {children}
     </h2>
+  );
+}
+
+interface PageProps extends PageHeaderProps {
+  /** "view" ocupa a área de conteúdo (até 1120 px); "reading" limita a 720 px, alinhado à esquerda. */
+  width?: "view" | "reading";
+  /** Link de volta acima do título (ex.: do detalhe para o grupo). */
+  back?: { href: string; label: ReactNode };
+  children: ReactNode;
+}
+
+/** Moldura de toda página logada: largura, cabeçalho e ritmo entre seções (32 px; 48 px no desktop). */
+export function Page({ width = "view", back, children, ...header }: PageProps) {
+  return (
+    <div className={width === "reading" ? "max-w-reading" : undefined}>
+      {back ? (
+        <Link
+          href={back.href}
+          className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
+        >
+          <ArrowLeftIcon className="size-4" />
+          {back.label}
+        </Link>
+      ) : null}
+      <PageHeader {...header} />
+      <div className="mt-8 flex flex-col gap-8 lg:gap-12">{children}</div>
+    </div>
   );
 }

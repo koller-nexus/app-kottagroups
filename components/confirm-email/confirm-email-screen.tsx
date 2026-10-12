@@ -51,76 +51,65 @@ export function ConfirmEmailScreen() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-kotta-bg px-5 py-10 sm:px-8">
-      <section className="w-full max-w-lg rounded-card border border-kotta-border bg-kotta-surface p-7 shadow-[0_20px_60px_rgba(26,92,56,0.08)] sm:p-10">
-        <Link
-          href="/"
-          className="font-display text-xl font-bold text-kotta-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
-        >
-          Kotta Groups
-        </Link>
-
-        <div className="mt-12" aria-live="polite">
-          {visibleState === "loading" && (
-            <div role="status">
-              <span className="mb-5 block size-10 animate-pulse rounded-full bg-kotta-light-green" />
-              <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
-                Confirmando seu e-mail
-              </h1>
-              <p className="mt-4 text-base leading-7 text-kotta-muted">
-                Só um instante. Estamos ativando sua conta.
-              </p>
-            </div>
-          )}
-
-          {visibleState === "success" && (
-            <div>
-              <div className="mb-5 flex size-10 items-center justify-center rounded-full bg-kotta-light-green text-kotta-primary" aria-hidden="true">
-                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="m5 12 4 4L19 6" />
-                </svg>
-              </div>
-              <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
-                E-mail confirmado
-              </h1>
-              <p className="mt-4 text-base leading-7 text-kotta-muted">
-                Sua conta está pronta. Abra o app Kotta Groups para entrar e
-                começar a organizar seus grupos.
-              </p>
-              <Link
-                href="/"
-                className="mt-8 inline-flex min-h-12 items-center justify-center rounded-control bg-kotta-primary px-6 font-semibold text-white transition-colors hover:bg-kotta-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
-              >
-                Voltar ao início
-              </Link>
-            </div>
-          )}
-
-          {visibleState === "missing" && (
-            <MessageState
-              title="Link incompleto"
-              description="Este link de confirmação não tem um token válido. Solicite um novo link para continuar."
-              action={null}
-            />
-          )}
-
-          {visibleState === "invalid" && (
-            <MessageState
-              title="Não foi possível confirmar"
-              description={message ?? "Este link é inválido, expirou ou já foi utilizado."}
-            />
-          )}
-
-          {visibleState === "unexpected-error" && (
-            <MessageState
-              title="Algo saiu do esperado"
-              description={message ?? "Não foi possível confirmar seu e-mail agora."}
-              action={<button onClick={retry} className="primary-action">Tentar novamente</button>}
-            />
-          )}
+    <div aria-live="polite">
+      {visibleState === "loading" && (
+        <div role="status">
+          <span className="mb-5 block size-10 animate-pulse rounded-full bg-kotta-light-green" />
+          <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
+            Confirmando seu e-mail
+          </h1>
+          <p className="mt-4 text-base leading-7 text-kotta-muted">
+            Só um instante. Estamos ativando sua conta.
+          </p>
         </div>
-      </section>
-    </main>
+      )}
+
+      {visibleState === "success" && (
+        <div>
+          <div className="mb-5 flex size-10 items-center justify-center rounded-full bg-kotta-light-green text-kotta-primary" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="m5 12 4 4L19 6" />
+            </svg>
+          </div>
+          <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
+            E-mail confirmado
+          </h1>
+          <p className="mt-4 text-base leading-7 text-kotta-muted">
+            Sua conta está pronta. Abra o app Kotta Groups para entrar e
+            começar a organizar seus grupos.
+          </p>
+          <Link
+            href="/"
+            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-control bg-kotta-primary px-6 font-semibold text-white transition-colors hover:bg-kotta-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
+          >
+            Voltar ao início
+          </Link>
+        </div>
+      )}
+
+      {visibleState === "missing" && (
+        <MessageState
+          title="Link incompleto"
+          description="Este link de confirmação não tem um token válido. Solicite um novo link para continuar."
+          action={null}
+        />
+      )}
+
+      {visibleState === "invalid" && (
+        <MessageState
+          title="Não foi possível confirmar"
+          description={message ?? "Este link é inválido, expirou ou já foi utilizado."}
+        />
+      )}
+
+      {visibleState === "unexpected-error" && (
+        <MessageState
+          title="Algo saiu do esperado"
+          description={message ?? "Não foi possível confirmar seu e-mail agora."}
+          action={<button onClick={retry} className="primary-action">Tentar novamente</button>}
+        />
+      )}
+    </div>
   );
 }
 
@@ -136,7 +125,7 @@ function MessageState({
   return (
     <div role="alert">
       <div className="mb-5 size-10 rounded-full bg-kotta-danger-bg" aria-hidden="true" />
-      <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">{title}</h1>
+      <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">{title}</h1>
       <p className="mt-4 max-w-md text-base leading-7 text-kotta-muted">{description}</p>
       {action ? <div className="mt-8">{action}</div> : null}
     </div>

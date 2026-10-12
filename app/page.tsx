@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app/app-shell";
 import { Dashboard } from "@/components/app/dashboard";
-import { DashboardView } from "@/components/app/dashboard-view";
+import { DASHBOARD_TAGLINE, DashboardView } from "@/components/app/dashboard-view";
 import { StoreBadge } from "@/components/landing/store-badge";
 import { getSessionToken } from "@/lib/api/session";
 import { buildPreviewDashboard } from "@/lib/dashboard-preview";
@@ -23,7 +23,7 @@ export default async function Home() {
 
   const preview = buildPreviewDashboard();
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-3 pb-12 sm:px-6 sm:pt-6">
+    <main className="mx-auto w-full max-w-view flex-1 px-4 pt-6 pb-12 sm:px-8 lg:px-10 lg:pt-10">
       <header className="flex min-h-[52px] items-center justify-between gap-2">
         <h1 className="min-w-0 truncate text-2xl font-bold tracking-[-0.4px] text-kotta-text">
           Kotta Groups
@@ -44,23 +44,27 @@ export default async function Home() {
         </div>
       </header>
 
-      <DashboardView
-        receivesCents={preview.receivesCents}
-        owesCents={preview.owesCents}
-        monthSpend={monthSpend(preview.expenses, PREVIEW_NOW)}
-        recent={preview.recent.map((item) => ({ ...item, href: "/entrar" }))}
-        groups={preview.groups.map((group) => ({ ...group, href: "/entrar" }))}
-        previewNote="Dados de exemplo. Entre para ver os seus."
-      />
+      <p className="mt-2 text-[15px] text-kotta-muted">{DASHBOARD_TAGLINE}</p>
 
-      <section aria-labelledby="no-celular" className="mt-8">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
+      <div className="mt-8">
+        <DashboardView
+          receivesCents={preview.receivesCents}
+          owesCents={preview.owesCents}
+          monthSpend={monthSpend(preview.expenses, PREVIEW_NOW)}
+          recent={preview.recent.map((item) => ({ ...item, href: "/entrar" }))}
+          groups={preview.groups.map((group) => ({ ...group, href: "/entrar" }))}
+          previewNote="Dados de exemplo. Entre para ver os seus."
+        />
+      </div>
+
+      <section aria-labelledby="no-celular" className="mt-8 lg:mt-12">
+        <div className="mb-3 flex max-w-md items-baseline justify-between gap-3">
           <h2 id="no-celular" className="text-xl font-bold text-kotta-text">
             No celular
           </h2>
           <p className="text-[13px] font-semibold text-kotta-primary">Em breve</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid max-w-md grid-cols-2 gap-3">
           <StoreBadge store="app-store" />
           <StoreBadge store="play-store" />
         </div>

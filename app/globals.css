@@ -25,6 +25,9 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   /* DM Mono só para chave Pix e códigos. */
   --font-mono: var(--font-dm-mono);
+  /* Larguras de conteúdo: leitura (formulários, detalhes) e visão (painel, listas). */
+  --container-reading: 45rem;
+  --container-view: 70rem;
   --radius-card: 16px;
   --radius-control: 12px;
   --radius-pill: 9999px;

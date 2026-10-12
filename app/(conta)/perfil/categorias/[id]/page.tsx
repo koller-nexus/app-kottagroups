@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageHeader } from "@/components/app/page-header";
+import { Page } from "@/components/app/page-header";
 import { CategoryForm } from "@/components/forms/category-form";
 import { listCategories } from "@/lib/api/kotta";
 
@@ -15,12 +15,12 @@ export default async function EditarCategoriaPage({ params }: PageProps<"/perfil
   if (!category) notFound();
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <PageHeader
-        title="Editar categoria"
-        description="A mudança vale para todo mundo que usa a Kotta Groups."
-      />
-      <div className="mt-8 rounded-card border border-kotta-border bg-kotta-surface p-6 sm:p-8">
+    <Page
+      width="reading"
+      title="Editar categoria"
+      description="A mudança vale para todo mundo que usa a Kotta Groups."
+    >
+      <div className="rounded-card border border-kotta-border bg-kotta-surface p-6 sm:p-8">
         {category.isDefault ? (
           <>
             <p className="rounded-control bg-kotta-danger-bg p-4 text-sm text-kotta-danger">
@@ -34,6 +34,6 @@ export default async function EditarCategoriaPage({ params }: PageProps<"/perfil
           <CategoryForm category={{ id: category.id, label: category.label, emoji: category.emoji }} />
         )}
       </div>
-    </div>
+    </Page>
   );
 }

@@ -1,4 +1,5 @@
-import { DashboardView } from "@/components/app/dashboard-view";
+import { DASHBOARD_TAGLINE, DashboardView } from "@/components/app/dashboard-view";
+import { Page } from "@/components/app/page-header";
 import {
   getMe,
   listExpensesSince,
@@ -25,10 +26,7 @@ export async function Dashboard() {
   const totals = balanceTotals(groups.map((g) => g.balances), me.id);
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-[28px] font-bold leading-tight text-kotta-text">
-        Olá, {firstName(me.name)}
-      </h1>
+    <Page title={`Olá, ${firstName(me.name)}`} description={DASHBOARD_TAGLINE}>
       <DashboardView
         receivesCents={totals.receivesCents}
         owesCents={totals.owesCents}
@@ -60,6 +58,6 @@ export async function Dashboard() {
           actionHref: "/grupos/novo",
         }}
       />
-    </div>
+    </Page>
   );
 }

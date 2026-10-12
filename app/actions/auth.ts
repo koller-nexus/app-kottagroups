@@ -80,7 +80,7 @@ export async function registerAction(_prev: AuthFormState, formData: FormData): 
 
 export async function logoutAction(): Promise<void> {
   await clearSessionToken();
-  redirect("/entrar");
+  redirect("/entrar?motivo=saiu");
 }
 
 export interface ResendState {

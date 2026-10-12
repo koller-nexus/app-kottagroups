@@ -57,121 +57,110 @@ export function ForgetPasswordScreen() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-kotta-bg px-5 py-10 sm:px-8">
-      <section className="w-full max-w-lg rounded-card border border-kotta-border bg-kotta-surface p-7 shadow-[0_20px_60px_rgba(26,92,56,0.08)] sm:p-10">
-        <Link
-          href="/"
-          className="font-display text-xl font-bold text-kotta-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
-        >
-          Kotta Groups
-        </Link>
+    <div aria-live="polite">
+      {visibleState === "form" && (
+        <form onSubmit={handleSubmit} noValidate>
+          <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
+            Nova senha
+          </h1>
+          <p className="mt-4 text-base leading-7 text-kotta-muted">
+            Escolha uma senha de 8 a 72 caracteres para voltar a entrar no
+            Kotta Groups.
+          </p>
 
-        <div className="mt-12" aria-live="polite">
-          {visibleState === "form" && (
-            <form onSubmit={handleSubmit} noValidate>
-              <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
-                Nova senha
-              </h1>
-              <p className="mt-4 text-base leading-7 text-kotta-muted">
-                Escolha uma senha de 8 a 72 caracteres para voltar a entrar no
-                Kotta Groups.
-              </p>
-
-              <div className="mt-8 space-y-5">
-                <Field
-                  id="new-password"
-                  label="Nova senha"
-                  type="password"
-                  value={password}
-                  autoComplete="new-password"
-                  onChange={(value) => {
-                    setPassword(value);
-                    setFieldError(undefined);
-                  }}
-                />
-                <Field
-                  id="confirm-password"
-                  label="Confirmar senha"
-                  type="password"
-                  value={confirmation}
-                  autoComplete="new-password"
-                  error={fieldError}
-                  onChange={(value) => {
-                    setConfirmation(value);
-                    setFieldError(undefined);
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="primary-action mt-8 w-full"
-                disabled={submitting}
-              >
-                {submitting ? "Salvando…" : "Salvar senha"}
-              </button>
-            </form>
-          )}
-
-          {visibleState === "success" && (
-            <div>
-              <div
-                className="mb-5 flex size-10 items-center justify-center rounded-full bg-kotta-light-green text-kotta-primary"
-                aria-hidden="true"
-              >
-                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="m5 12 4 4L19 6" />
-                </svg>
-              </div>
-              <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
-                Senha atualizada
-              </h1>
-              <p className="mt-4 text-base leading-7 text-kotta-muted">
-                Abra o app Kotta Groups e entre com a nova senha.
-              </p>
-              <Link href="/" className="primary-action mt-8">
-                Voltar ao início
-              </Link>
-            </div>
-          )}
-
-          {visibleState === "missing" && (
-            <MessageState
-              title="Link incompleto"
-              description="Este link de recuperação não tem um token válido. Solicite um novo link no app para continuar."
+          <div className="mt-8 space-y-5">
+            <Field
+              id="new-password"
+              label="Nova senha"
+              type="password"
+              value={password}
+              autoComplete="new-password"
+              onChange={(value) => {
+                setPassword(value);
+                setFieldError(undefined);
+              }}
             />
-          )}
-
-          {visibleState === "invalid" && (
-            <MessageState
-              title="Não foi possível redefinir"
-              description={
-                message ?? "Este link é inválido, expirou ou já foi utilizado."
-              }
+            <Field
+              id="confirm-password"
+              label="Confirmar senha"
+              type="password"
+              value={confirmation}
+              autoComplete="new-password"
+              error={fieldError}
+              onChange={(value) => {
+                setConfirmation(value);
+                setFieldError(undefined);
+              }}
             />
-          )}
+          </div>
 
-          {visibleState === "unexpected-error" && (
-            <MessageState
-              title="Algo saiu do esperado"
-              description={message ?? "Não foi possível redefinir sua senha agora."}
-              action={
-                <button
-                  type="button"
-                  className="primary-action"
-                  onClick={() => {
-                    setMessage(undefined);
-                    setState("form");
-                  }}
-                >
-                  Tentar novamente
-                </button>
-              }
-            />
-          )}
+          <button
+            type="submit"
+            className="primary-action mt-8 w-full"
+            disabled={submitting}
+          >
+            {submitting ? "Salvando…" : "Salvar senha"}
+          </button>
+        </form>
+      )}
+
+      {visibleState === "success" && (
+        <div>
+          <div
+            className="mb-5 flex size-10 items-center justify-center rounded-full bg-kotta-light-green text-kotta-primary"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="m5 12 4 4L19 6" />
+            </svg>
+          </div>
+          <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
+            Senha atualizada
+          </h1>
+          <p className="mt-4 text-base leading-7 text-kotta-muted">
+            Abra o app Kotta Groups e entre com a nova senha.
+          </p>
+          <Link href="/" className="primary-action mt-8">
+            Voltar ao início
+          </Link>
         </div>
-      </section>
-    </main>
+      )}
+
+      {visibleState === "missing" && (
+        <MessageState
+          title="Link incompleto"
+          description="Este link de recuperação não tem um token válido. Solicite um novo link no app para continuar."
+        />
+      )}
+
+      {visibleState === "invalid" && (
+        <MessageState
+          title="Não foi possível redefinir"
+          description={
+            message ?? "Este link é inválido, expirou ou já foi utilizado."
+          }
+        />
+      )}
+
+      {visibleState === "unexpected-error" && (
+        <MessageState
+          title="Algo saiu do esperado"
+          description={message ?? "Não foi possível redefinir sua senha agora."}
+          action={
+            <button
+              type="button"
+              className="primary-action"
+              onClick={() => {
+                setMessage(undefined);
+                setState("form");
+              }}
+            >
+              Tentar novamente
+            </button>
+          }
+        />
+      )}
+    </div>
   );
 }
 
@@ -229,7 +218,7 @@ function MessageState({
   return (
     <div role="alert">
       <div className="mb-5 size-10 rounded-full bg-kotta-danger-bg" aria-hidden="true" />
-      <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
+      <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
         {title}
       </h1>
       <p className="mt-4 max-w-md text-base leading-7 text-kotta-muted">{description}</p>

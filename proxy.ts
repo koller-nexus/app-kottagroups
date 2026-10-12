@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { PATH_HEADER } from "@/lib/session-flow";
 
 // Checagem otimista: só olha se o cookie existe. A validade do token é
 // confirmada pela API em cada chamada (lib/api/server.ts).
@@ -24,7 +25,11 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 
-  return NextResponse.next();
+  // Caminho atual para o apiRequest montar o "voltar para" quando a sessão expira.
+  // Sobrescreve qualquer valor que venha do cliente.
+  const headers = new Headers(request.headers);
+  headers.set(PATH_HEADER, `${pathname}${search}`);
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {

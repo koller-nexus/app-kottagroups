@@ -1,9 +1,10 @@
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, Ref } from "react";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   hint?: string;
+  ref?: Ref<HTMLInputElement>;
 }
 
 export function Field({ id, label, hint, className = "", ...input }: FieldProps) {

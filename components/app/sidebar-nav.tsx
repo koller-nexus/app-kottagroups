@@ -22,7 +22,7 @@ export function SidebarNav({ groupLinks }: { groupLinks: GroupLink[] }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Principal" className="flex flex-1 flex-col gap-8">
+    <nav aria-label="Principal" className="-mx-1 flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-1">
       <ul className="flex flex-col gap-1">
         {navItems.map((item) => {
           const Icon = icons[item.icon];

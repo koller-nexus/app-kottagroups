@@ -90,7 +90,7 @@ export interface ResendState {
 export async function resendConfirmationAction(): Promise<ResendState> {
   try {
     const user = await apiRequest<ApiUser>("/auth/resend-confirmation", { method: "POST" });
-    if (user?.emailConfirmed) redirect("/painel");
+    if (user?.emailConfirmed) redirect("/");
     return { status: "sent", message: "Enviamos um novo link para o seu e-mail." };
   } catch (error) {
     if (error instanceof ApiError) {

@@ -123,7 +123,7 @@ export function NewExpenseForm({ groups, categories, meId, defaultGroupId }: New
       </p>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Link href={groupId ? `/grupos/${groupId}` : "/painel"} className="secondary-action">
+        <Link href={groupId ? `/grupos/${groupId}` : "/"} className="secondary-action">
           Cancelar
         </Link>
         <button type="submit" className="primary-action" disabled={pending}>

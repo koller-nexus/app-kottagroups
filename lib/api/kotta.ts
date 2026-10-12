@@ -80,12 +80,12 @@ export const listCategories = cache(async () => {
   return result.items;
 });
 
-export const listUnpaidNotifications = cache(async () => {
-  const result = await apiRequest<CursorPage<ApiNotification>>(
-    withQuery("/notifications", { status: "unpaid", limit: 50 }),
-  );
-  return result.items;
-});
+export const listNotificationsPage = cache(
+  async (status: "unpaid" | "all", limit = 20, cursor?: string) =>
+    apiRequest<CursorPage<ApiNotification>>(
+      withQuery("/notifications", { status, limit, cursor }),
+    ),
+);
 
 export const getNotificationCount = cache(async () => {
   const result = await apiRequest<{ count: number }>("/notifications/count");

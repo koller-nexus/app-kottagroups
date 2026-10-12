@@ -3,9 +3,13 @@ import type { MonthSpend } from "@/lib/demo-landing";
 
 interface MonthSpendBlockProps {
   monthSpend: MonthSpend;
+  className?: string;
 }
 
-export function MonthSpendBlock({ monthSpend }: MonthSpendBlockProps) {
+export function MonthSpendBlock({
+  monthSpend,
+  className = "mt-8 sm:mt-10",
+}: MonthSpendBlockProps) {
   const max = Math.max(
     monthSpend.previousMonthCents,
     monthSpend.currentMonthCents,
@@ -15,7 +19,9 @@ export function MonthSpendBlock({ monthSpend }: MonthSpendBlockProps) {
   const currentWidth = (monthSpend.currentMonthCents / max) * 100;
 
   return (
-    <section className="mt-8 flex flex-col gap-5 rounded-card border border-kotta-border bg-kotta-surface p-6 sm:mt-10 sm:p-8">
+    <section
+      className={`${className} flex flex-col gap-5 rounded-card border border-kotta-border bg-kotta-surface p-6 sm:p-8`}
+    >
       <h2 className="font-mono text-xs font-medium tracking-widest text-kotta-muted">
         GASTOS DOS GRUPOS
       </h2>

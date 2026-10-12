@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 // Checagem otimista: só olha se o cookie existe. A validade do token é
 // confirmada pela API em cada chamada (lib/api/server.ts).
 const SESSION_COOKIE = "kotta_session";
-const PROTECTED = ["/painel", "/grupos", "/perfil", "/despesas", "/confirme-seu-email"];
-const GUEST_ONLY = ["/entrar", "/cadastrar"];
+const PROTECTED = ["/grupos", "/notificacoes", "/notas", "/perfil", "/despesas", "/confirme-seu-email"];
+const GUEST_ONLY = ["/entrar", "/cadastrar", "/esqueci-a-senha"];
 
 function matches(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -21,7 +21,7 @@ export default function proxy(request: NextRequest) {
   }
 
   if (hasSession && matches(pathname, GUEST_ONLY)) {
-    return NextResponse.redirect(new URL("/painel", request.nextUrl));
+    return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 
   return NextResponse.next();

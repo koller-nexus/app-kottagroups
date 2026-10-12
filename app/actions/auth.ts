@@ -5,6 +5,7 @@ import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { apiRequest } from "@/lib/api/server";
 import { clearSessionToken, setSessionToken } from "@/lib/api/session";
 import type { ApiUser } from "@/lib/api/types";
+import { failure, type FormState } from "@/lib/form";
 import { safeNextPath } from "@/lib/safe-next";
 
 export interface AuthFormState {
@@ -90,7 +91,7 @@ export interface ResendState {
 export async function resendConfirmationAction(): Promise<ResendState> {
   try {
     const user = await apiRequest<ApiUser>("/auth/resend-confirmation", { method: "POST" });
-    if (user?.emailConfirmed) redirect("/painel");
+    if (user?.emailConfirmed) redirect("/");
     return { status: "sent", message: "Enviamos um novo link para o seu e-mail." };
   } catch (error) {
     if (error instanceof ApiError) {
@@ -98,4 +99,24 @@ export async function resendConfirmationAction(): Promise<ResendState> {
     }
     throw error;
   }
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function requestPasswordResetAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const email = text(formData, "email");
+  const values = { email };
+  if (!EMAIL_PATTERN.test(email)) return { error: "Informe um e-mail válido.", values };
+
+  try {
+    // A API responde ok mesmo sem conta, para não revelar quem está cadastrado.
+    await apiRequest<{ ok: boolean }>("/users/forget-password", {
+      method: "POST",
+      auth: false,
+      body: { email },
+    });
+  } catch (error) {
+    return failure(error, values);
+  }
+  return { ok: true, values };
 }

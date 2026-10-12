@@ -36,6 +36,12 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
         autoComplete="current-password"
         required
       />
+      <Link
+        href="/esqueci-a-senha"
+        className="-mt-2 inline-flex min-h-11 items-center self-end text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
+      >
+        Esqueci a senha
+      </Link>
       <button type="submit" className="primary-action mt-2 w-full" disabled={pending}>
         {pending ? "Entrando…" : "Entrar"}
       </button>

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { BalanceChip } from "@/components/app/balance-chip";
 import { GardenField } from "@/components/app/garden-field";
@@ -7,41 +6,30 @@ import {
   getMe,
   listExpensesSince,
   listGroupDetails,
-  listSettlements,
+  listNotificationsPage,
 } from "@/lib/api/kotta";
-import type { ApiSettlement } from "@/lib/api/types";
 import { balanceTotals, monthSpend, netFor, previousMonthStartIso } from "@/lib/kotta-view";
-import { peopleById } from "@/lib/people";
-
-export const metadata: Metadata = {
-  title: "Painel — Kotta Groups",
-};
+import { firstName, peopleById } from "@/lib/people";
 
 // Mesmo limite do DashboardViewModel do app.
 const RECENT_LIMIT = 3;
 
-export default async function PainelPage() {
+export async function Dashboard() {
   const nowIso = new Date().toISOString();
   const since = previousMonthStartIso(nowIso);
-  const [me, groups] = await Promise.all([getMe(), listGroupDetails()]);
-  const [monthExpenses, settlementsByGroup] = await Promise.all([
-    Promise.all(groups.map((g) => listExpensesSince(g.id, since))),
-    Promise.all(groups.map((g) => listSettlements(g.id))),
+  const [me, groups, notifications] = await Promise.all([
+    getMe(),
+    listGroupDetails(),
+    listNotificationsPage("all", RECENT_LIMIT),
   ]);
+  const monthExpenses = await Promise.all(groups.map((g) => listExpensesSince(g.id, since)));
 
   const names = peopleById(groups);
   const totals = balanceTotals(groups.map((g) => g.balances), me.id);
   const spend = monthSpend(monthExpenses.flat(), nowIso);
   const monthMax = Math.max(spend.currentMonthCents, spend.previousMonthCents);
-  const recent: (ApiSettlement & { groupId: string })[] = [];
-  groups.forEach((group, index) => {
-    for (const settlement of settlementsByGroup[index]) {
-      if (recent.length >= RECENT_LIMIT) return;
-      if (settlement.from === me.id || settlement.to === me.id) {
-        recent.push({ ...settlement, groupId: group.id });
-      }
-    }
-  });
+  // A API já devolve só as quitações que envolvem você, mais recentes primeiro.
+  const recent = notifications.items;
 
   const bars = [
     { key: "prev", label: "Mês passado", value: spend.previousMonthCents, fill: "bg-kotta-border-strong" },
@@ -50,8 +38,10 @@ export default async function PainelPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="sr-only">Painel</h1>
-      <p className="max-w-80 text-base leading-[23px] text-kotta-muted">
+      <h1 className="text-[28px] font-bold leading-tight text-kotta-text">
+        Olá, {firstName(me.name)}
+      </h1>
+      <p className="mt-1 max-w-80 text-base leading-[23px] text-kotta-muted">
         Dividir os gastos da viagem sem fazer conta de cabeça.
       </p>
 
@@ -105,22 +95,23 @@ export default async function PainelPage() {
         ) : (
           <ul className="divide-y divide-kotta-border rounded-card bg-kotta-surface px-4">
             {recent.map((item) => {
-              const youReceive = item.to === me.id;
+              const youReceive = item.direction === "incoming";
               const otherName = names.get(youReceive ? item.from : item.to) ?? "Ex-membro";
               return (
                 <li key={item.id}>
                   <Link
-                    href={`/grupos/${item.groupId}?aba=saldos`}
+                    href={`/grupos/${item.group.id}?aba=saldos`}
                     className="flex min-h-[68px] items-center gap-3 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
                   >
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate text-base font-semibold text-kotta-text">
                         {youReceive ? `${otherName} te paga` : `Você paga pra ${otherName}`}
                       </span>
-                      <span
-                        className={`text-[13px] font-semibold ${item.paid ? "text-kotta-primary" : "text-kotta-muted"}`}
-                      >
-                        {item.paid ? "Pago" : "Pendente"}
+                      <span className="text-[13px] text-kotta-muted">
+                        {item.group.name} ·{" "}
+                        <span className={`font-semibold ${item.paid ? "text-kotta-primary" : ""}`}>
+                          {item.paid ? "Pago" : "Pendente"}
+                        </span>
                       </span>
                     </span>
                     <Price

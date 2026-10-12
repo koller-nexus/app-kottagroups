@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GroupsIcon, HomeIcon, UserIcon } from "@/components/app/icons";
+import { GroupsIcon, HomeIcon, ReceiptIcon, UserIcon } from "@/components/app/icons";
 import { isActive, navItems, type NavIcon } from "@/components/app/nav-items";
 
 const icons: Record<NavIcon, typeof HomeIcon> = {
   home: HomeIcon,
   groups: GroupsIcon,
+  receipt: ReceiptIcon,
   user: UserIcon,
 };
 
@@ -86,7 +87,7 @@ export function MobileTabBar() {
       aria-label="Principal"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-kotta-border bg-kotta-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-3">
+      <ul className="mx-auto grid max-w-md grid-cols-4">
         {navItems.map((item) => {
           const Icon = icons[item.icon];
           const active = isActive(pathname, item.href);

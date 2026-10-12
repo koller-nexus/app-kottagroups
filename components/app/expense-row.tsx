@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { CategoryView } from "@/lib/categories";
-import { formatBRL } from "@/lib/money";
+import { Price } from "@/components/app/price";
 
 interface ExpenseRowProps {
   description: string;
@@ -22,9 +22,7 @@ export function ExpenseRow({ description, amountCents, category, meta }: Expense
         <p className="truncate font-semibold text-kotta-text">{description}</p>
         <p className="mt-0.5 truncate text-[13px] text-kotta-muted">{meta}</p>
       </div>
-      <p className="shrink-0 font-mono text-sm font-medium text-kotta-text">
-        {formatBRL(amountCents)}
-      </p>
+      <Price cents={amountCents} size={18} className="shrink-0 text-kotta-text" />
     </div>
   );
 }

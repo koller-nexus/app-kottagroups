@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import { markSettlementPaidAction } from "@/app/actions/kotta";
 import { Avatar, AvatarStack } from "@/components/app/avatar";
 import { ExpenseRow } from "@/components/app/expense-row";
+import { GardenField } from "@/components/app/garden-field";
+import { Price } from "@/components/app/price";
 import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "@/components/app/icons";
 import { PageHeader, SectionLabel } from "@/components/app/page-header";
 import { getGroup, getMe, listCategories, listExpensesPage, listSettlements } from "@/lib/api/kotta";
@@ -13,7 +15,6 @@ import type { ApiGroupDetail } from "@/lib/api/types";
 import { categoryLookup } from "@/lib/categories";
 import { formatLongDay, formatMonthYear } from "@/lib/dates";
 import { groupByMonthAndDay, netFor } from "@/lib/kotta-view";
-import { formatBRL } from "@/lib/money";
 import { displayName, peopleById } from "@/lib/people";
 
 type Tab = "despesas" | "saldos";
@@ -80,8 +81,8 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
         description={
           <span className="flex flex-wrap items-center gap-3">
             <AvatarStack people={group.members} />
-            <span className="font-mono text-xs">
-              {group.members.length === 1 ? "1 membro" : `${group.members.length} membros`}
+            <span className="text-[13px]">
+              {group.members.length} {group.members.length === 1 ? "pessoa" : "pessoas"}
               {group.archived ? " · arquivado" : ""}
             </span>
           </span>
@@ -114,7 +115,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
           aria-labelledby="despesas"
           className={tab === "despesas" ? "min-w-0" : "hidden min-w-0 lg:block"}
         >
-          <SectionLabel id="despesas">DESPESAS</SectionLabel>
+          <SectionLabel id="despesas">Despesas</SectionLabel>
           {timeline.length === 0 ? (
             <div className="rounded-card border border-dashed border-kotta-border bg-kotta-surface p-8 text-center">
               <p className="font-semibold text-kotta-text">Nenhuma despesa ainda</p>
@@ -126,7 +127,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
             <div className="flex flex-col gap-8">
               {timeline.map(({ month, days }) => (
                 <div key={month}>
-                  <h3 className="font-display text-xl font-semibold text-kotta-secondary first-letter:uppercase">
+                  <h3 className="text-[17px] font-bold text-kotta-text first-letter:uppercase">
                     {formatMonthYear(`${month}-01`)}
                   </h3>
                   <div className="mt-4 flex flex-col gap-5">
@@ -170,38 +171,19 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
             tab === "saldos" ? "" : "hidden lg:flex"
           }`}
         >
-          <section
-            aria-labelledby="seu-saldo"
-            className={`rounded-card p-6 ${
-              myNet > 0 ? "bg-kotta-primary text-white" : "border border-kotta-border bg-kotta-surface"
-            }`}
-          >
-            <h2
-              id="seu-saldo"
-              className={`font-mono text-[11px] font-medium tracking-wide ${
-                myNet > 0 ? "text-white/75" : "text-kotta-muted"
-              }`}
-            >
-              SEU SALDO NO GRUPO
+          <GardenField>
+            <h2 id="seu-saldo" className="text-[13px] font-semibold text-kotta-on-field-muted">
+              Seu saldo no grupo · {myNet > 0 ? "a receber" : myNet < 0 ? "a pagar" : "quite"}
             </h2>
-            <p
-              className={`mt-3 font-mono text-[32px] font-medium leading-none ${
-                myNet > 0 ? "" : myNet < 0 ? "text-kotta-danger" : "text-kotta-text"
-              }`}
-            >
-              {formatBRL(Math.abs(myNet))}
-            </p>
-            <p className={`mt-2 text-sm ${myNet > 0 ? "text-white/85" : "text-kotta-muted"}`}>
-              {myNet > 0
-                ? "Você tem a receber neste grupo."
-                : myNet < 0
-                  ? "Você tem a pagar neste grupo."
-                  : "Você está quite neste grupo."}
-            </p>
-          </section>
+            <Price
+              cents={myNet}
+              size={44}
+              className={myNet < 0 ? "text-kotta-on-field-owes" : "text-white"}
+            />
+          </GardenField>
 
           <section aria-labelledby="acertos">
-            <SectionLabel id="acertos">PARA ACERTAR</SectionLabel>
+            <SectionLabel id="acertos">Para acertar</SectionLabel>
             {open.length === 0 ? (
               <p className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
                 Todos estão quites neste grupo.
@@ -227,9 +209,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                           person={{ id: settlement.to, name: names.get(settlement.to) ?? "?" }}
                           size="sm"
                         />
-                        <span className="ml-auto font-mono text-sm font-medium text-kotta-text">
-                          {formatBRL(settlement.amountCents)}
-                        </span>
+                        <Price cents={settlement.amountCents} size={18} className="ml-auto text-kotta-text" />
                       </div>
                       <p className="mt-2 text-sm text-kotta-text">
                         <span className="font-semibold">{displayName(names, settlement.from, me.id)}</span>{" "}
@@ -258,7 +238,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
 
           {done.length > 0 ? (
             <section aria-labelledby="quitados">
-              <SectionLabel id="quitados">JÁ ACERTADOS</SectionLabel>
+              <SectionLabel id="quitados">Já acertados</SectionLabel>
               <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
                 {done.map((settlement) => (
                   <li key={settlement.id} className="flex items-center gap-3 px-4 py-3 text-sm">
@@ -266,9 +246,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                       {displayName(names, settlement.from, me.id)} pagou{" "}
                       {displayName(names, settlement.to, me.id, { object: true })}
                     </span>
-                    <span className="font-mono text-[13px] text-kotta-muted">
-                      {formatBRL(settlement.amountCents)}
-                    </span>
+                    <Price cents={settlement.amountCents} size={15} settled />
                   </li>
                 ))}
               </ul>
@@ -276,7 +254,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
           ) : null}
 
           <section aria-labelledby="membros">
-            <SectionLabel id="membros">MEMBROS</SectionLabel>
+            <SectionLabel id="membros">Membros</SectionLabel>
             <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
               {group.members.map((member) => {
                 const value = netFor(group.balances, member.id);
@@ -286,18 +264,21 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                     <span className="min-w-0 flex-1 truncate text-sm font-medium text-kotta-text">
                       {member.id === me.id ? `${member.name} (você)` : member.name}
                       {member.role === "owner" ? (
-                        <span className="ml-2 font-mono text-[11px] text-kotta-muted">dono</span>
+                        <span className="ml-2 text-xs text-kotta-muted">dono</span>
                       ) : member.role === "admin" ? (
-                        <span className="ml-2 font-mono text-[11px] text-kotta-muted">admin</span>
+                        <span className="ml-2 text-xs text-kotta-muted">admin</span>
                       ) : null}
                     </span>
-                    <span
-                      className={`font-mono text-[13px] font-medium ${
-                        value > 0 ? "text-kotta-primary" : value < 0 ? "text-kotta-danger" : "text-kotta-muted"
-                      }`}
-                    >
-                      {value === 0 ? "quite" : `${value > 0 ? "+" : "−"} ${formatBRL(Math.abs(value))}`}
-                    </span>
+                    {value === 0 ? (
+                      <span className="text-[13px] font-semibold text-kotta-muted">quite</span>
+                    ) : (
+                      <Price
+                        cents={value}
+                        size={15}
+                        sign={value > 0 ? "+" : "−"}
+                        className={value > 0 ? "text-kotta-primary" : "text-kotta-danger"}
+                      />
+                    )}
                   </li>
                 );
               })}

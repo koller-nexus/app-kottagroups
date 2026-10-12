@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AvatarStack } from "@/components/app/avatar";
 import { PlusIcon } from "@/components/app/icons";
 import { PageHeader } from "@/components/app/page-header";
-import { BalanceChip } from "@/components/landing/balance-chip";
+import { BalanceChip } from "@/components/app/balance-chip";
 import { getMe, listExpensesPage, listGroupDetails } from "@/lib/api/kotta";
 import { formatShortDate } from "@/lib/dates";
 import { localDay, netFor } from "@/lib/kotta-view";
@@ -54,8 +54,8 @@ export default async function GruposPage() {
                     </span>
                     <div className="min-w-0 flex-1 pt-1">
                       <p className="truncate text-lg font-semibold text-kotta-text">{group.name}</p>
-                      <p className="mt-0.5 font-mono text-xs text-kotta-muted">
-                        {group.members.length === 1 ? "1 membro" : `${group.members.length} membros`}
+                      <p className="mt-1 text-[13px] text-kotta-muted">
+                        {group.members.length} {group.members.length === 1 ? "pessoa" : "pessoas"}
                       </p>
                     </div>
                     <BalanceChip netCents={netFor(group.balances, me.id)} />

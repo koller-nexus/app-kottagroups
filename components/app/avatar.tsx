@@ -48,7 +48,7 @@ export function AvatarStack({ people, max = 4 }: { people: AvatarPerson[]; max?:
         <Avatar key={person.id} person={person} size="sm" className="ring-2 ring-kotta-surface" />
       ))}
       {hidden > 0 ? (
-        <span className="inline-flex size-7 items-center justify-center rounded-full bg-kotta-light-green font-mono text-[11px] text-kotta-primary ring-2 ring-kotta-surface">
+        <span className="inline-flex size-7 items-center justify-center rounded-full bg-kotta-light-green text-[11px] font-semibold text-kotta-primary ring-2 ring-kotta-surface">
           +{hidden}
         </span>
       ) : null}

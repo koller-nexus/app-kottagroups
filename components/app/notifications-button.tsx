@@ -14,7 +14,7 @@ export function NotificationsButton({ count }: { count: number }) {
     >
       <BellIcon className="size-6" />
       {count > 0 ? (
-        <span className="absolute top-1.5 right-1 flex min-w-5 items-center justify-center rounded-pill bg-kotta-danger px-1 font-mono text-[10px] leading-5 text-white ring-2 ring-kotta-surface">
+        <span className="absolute top-1.5 right-1 flex min-w-5 items-center justify-center rounded-pill bg-kotta-danger px-1 text-[10px] font-semibold leading-5 text-white ring-2 ring-kotta-surface">
           {count > 99 ? "99+" : count}
         </span>
       ) : null}

@@ -14,7 +14,7 @@ export default async function EntrarPage({ searchParams }: PageProps<"/entrar">)
 
   return (
     <>
-      <h1 className="font-display text-4xl font-semibold leading-tight text-kotta-secondary">
+      <h1 className="text-[34px] font-bold leading-tight tracking-tight text-kotta-text">
         Entrar
       </h1>
       <p className="mt-3 mb-8 text-base text-kotta-muted">

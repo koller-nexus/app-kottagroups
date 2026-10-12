@@ -13,7 +13,7 @@ export function PageHeader({ title, description, leading, actions }: PageHeaderP
       <div className="flex min-w-0 items-start gap-4">
         {leading}
         <div className="min-w-0">
-          <h1 className="font-display text-[32px] font-bold leading-tight text-kotta-secondary sm:text-[40px]">
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-kotta-text sm:text-[34px]">
             {title}
           </h1>
           {description ? (
@@ -30,7 +30,7 @@ export function SectionLabel({ children, id }: { children: ReactNode; id?: strin
   return (
     <h2
       id={id}
-      className="mb-4 font-mono text-xs font-medium tracking-widest text-kotta-muted"
+      className="mb-3 text-xl font-bold text-kotta-text"
     >
       {children}
     </h2>

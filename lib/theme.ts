@@ -1,27 +1,39 @@
-export const colors = {
-  primary: '#1a5c38',
-  accent: '#2e8b57',
-  secondary: '#1a1a1a',
-  background: '#f7f9f8',
-  surface: '#FFFFFF',
-  onSurface: '#3d3d3d',
-  onSurfaceMuted: '#6B7280',
-  textPrimary: '#3d3d3d',
-  textSecondary: '#6B7280',
-  border: '#d8e6df',
-  borderSubtle: 'rgba(26, 92, 56, 0.12)',
-  cardBorder: '#e9f0ec',
-  overlayDark: 'rgba(26, 92, 56, 0.06)',
-  overlayLight: 'rgba(26, 92, 56, 0.06)',
-  neutralBg: 'rgba(107, 114, 128, 0.10)',
+// Espelha DESIGN.md (Kotta "Jardim") e o src/theme.ts do app mobile.
+const leaf = {
+  mist: '#F1F4EE',
+  field: '#DCEADF',
+  line: '#DCE3DC',
+  lineStrong: '#BFCBC1',
+  muted: '#56665C',
+  ink: '#18211C',
+} as const;
+
+const garden = {
+  green: '#2F6B4F',
+  greenDeep: '#234F3B',
+  terracotta: '#A4492A',
+  sandRose: '#F6E6DE',
   white: '#FFFFFF',
-  success: '#1a5c38',
-  successBg: '#edf7f1',
-  successStrong: '#1a5c38',
-  danger: '#C93A3A',
-  dangerBg: 'rgba(201, 58, 58, 0.10)',
-  dangerStrong: '#C93A3A',
-  neutralText: '#6B7280',
+} as const;
+
+export const colors = {
+  primary: garden.green,
+  primaryPressed: garden.greenDeep,
+  field: garden.green,
+  onField: garden.white,
+  onFieldMuted: '#CFE3D5',
+  onFieldDanger: '#FFD9CC',
+  tonal: leaf.field,
+  background: leaf.mist,
+  surface: garden.white,
+  onSurface: leaf.ink,
+  onSurfaceMuted: leaf.muted,
+  border: leaf.line,
+  borderStrong: leaf.lineStrong,
+  success: garden.green,
+  successBg: leaf.field,
+  danger: garden.terracotta,
+  dangerBg: garden.sandRose,
 } as const;
 
 export const spacing = {
@@ -34,31 +46,20 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  card: 24,
+  card: 16,
   control: 12,
-  inner: 12,
   pill: 999,
+  sweep: 96,
 } as const;
 
-export const fonts = {
-  display: 'DMSans_800ExtraBold',
-  body: 'DMSans_400Regular',
-  bodyMedium: 'DMSans_500Medium',
-  bodySemiBold: 'DMSans_600SemiBold',
-  bodyBold: 'DMSans_700Bold',
-  bodyExtraBold: 'DMSans_800ExtraBold',
-  mono: 'DMMono_400Regular',
-  monoMedium: 'DMMono_500Medium',
-  monoSemiBold: 'DMMono_500Medium',
-} as const;
-
+// Cores de avatar; todas com iniciais brancas em contraste >= 4.5:1.
 export const avatarColors = [
-  '#1a5c38',
-  '#2e8b57',
-  '#134429',
-  '#3E7C5B',
-  '#1F6B45',
-  '#2F855A',
-  '#276749',
-  '#285E43',
+  '#2F6B4F',
+  '#A4492A',
+  '#3D5A80',
+  '#7A5C1E',
+  '#6B4C7A',
+  '#2E6E6A',
+  '#18211C',
+  '#8A4F5C',
 ] as const;

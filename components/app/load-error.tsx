@@ -3,7 +3,7 @@
 export function LoadError({ retry }: { retry: () => void }) {
   return (
     <div className="mx-auto max-w-lg rounded-card border border-kotta-border bg-kotta-surface p-8 text-center">
-      <h1 className="font-display text-2xl font-bold text-kotta-secondary">
+      <h1 className="text-2xl font-bold text-kotta-text">
         Não foi possível carregar seus dados
       </h1>
       <p className="mt-3 text-sm text-kotta-muted">

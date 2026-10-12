@@ -1,41 +1,48 @@
 @import "tailwindcss";
 
-/* Tokens from DESIGN.md — Kotta tema verde Super Putt */
+/* Tokens do DESIGN.md — Kotta "Jardim" (mesmo sistema do app mobile) */
 @theme inline {
-  --color-kotta-primary: #1a5c38;
-  --color-kotta-accent: #2e8b57;
-  --color-kotta-secondary: #1a1a1a;
-  --color-kotta-bg: #f7f9f8;
+  --color-kotta-primary: #2f6b4f; /* garden green */
+  --color-kotta-primary-deep: #234f3b; /* pressed */
+  --color-kotta-accent: #234f3b;
+  --color-kotta-secondary: #18211c; /* ink */
+  --color-kotta-bg: #f1f4ee; /* leaf mist */
   --color-kotta-surface: #ffffff;
-  --color-kotta-light-green: #edf7f1;
-  --color-kotta-text: #3d3d3d;
-  --color-kotta-muted: #6b7280;
-  --color-kotta-border: #d8e6df;
-  --color-kotta-danger: #c93a3a;
-  --color-kotta-success-bg: #edf7f1;
-  --color-kotta-danger-bg: rgb(201 58 58 / 0.1);
-  --color-kotta-neutral-bg: rgb(107 114 128 / 0.1);
-  --color-kotta-overlay: rgb(26 92 56 / 0.06);
-  --font-display: var(--font-playfair);
-  --font-sans: var(--font-dm-sans);
+  --color-kotta-light-green: #dceadf; /* leaf field (tonal) */
+  --color-kotta-text: #18211c; /* ink */
+  --color-kotta-muted: #56665c;
+  --color-kotta-border: #dce3dc; /* leaf line */
+  --color-kotta-border-strong: #bfcbc1;
+  --color-kotta-danger: #a4492a; /* terracotta: só "deve" e erros */
+  --color-kotta-success-bg: #dceadf;
+  --color-kotta-danger-bg: #f6e6de; /* sand rose */
+  --color-kotta-neutral-bg: #dce3dc;
+  --color-kotta-overlay: #f1f4ee;
+  --color-kotta-on-field-muted: #cfe3d5;
+  --color-kotta-on-field-owes: #ffd9cc;
+  /* Face da plataforma: SF Pro no Apple, Segoe/Roboto nos demais. */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* DM Mono só para chave Pix e códigos. */
   --font-mono: var(--font-dm-mono);
-  --radius-card: 24px;
+  --radius-card: 16px;
   --radius-control: 12px;
   --radius-pill: 9999px;
+  --radius-sweep: 96px;
   --spacing-base: 8px;
   --spacing-gap: 16px;
-  --spacing-card: 24px;
+  --spacing-card: 20px;
 }
 
 body {
-  background: #f7f9f8;
-  color: #3d3d3d;
-  font-family: var(--font-dm-sans), sans-serif;
+  background: #f1f4ee;
+  color: #18211c;
+  font-family: var(--font-sans);
 }
 
 .primary-action {
   display: inline-flex;
-  min-height: 3rem;
+  min-height: 3.25rem;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-control);
@@ -47,7 +54,12 @@ body {
 }
 
 .primary-action:hover {
-  background: var(--color-kotta-accent);
+  background: var(--color-kotta-primary-deep);
+}
+
+.primary-action:disabled {
+  background: var(--color-kotta-border);
+  color: var(--color-kotta-muted);
 }
 
 .primary-action:focus-visible {
@@ -68,7 +80,7 @@ body {
 
 .secondary-action {
   display: inline-flex;
-  min-height: 3rem;
+  min-height: 3.25rem;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;

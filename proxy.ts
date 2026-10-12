@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // confirmada pela API em cada chamada (lib/api/server.ts).
 const SESSION_COOKIE = "kotta_session";
 const PROTECTED = ["/grupos", "/notificacoes", "/notas", "/perfil", "/despesas", "/confirme-seu-email"];
-const GUEST_ONLY = ["/entrar", "/cadastrar"];
+const GUEST_ONLY = ["/entrar", "/cadastrar", "/esqueci-a-senha"];
 
 function matches(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

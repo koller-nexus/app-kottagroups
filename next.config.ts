@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     // Comprovantes e notas fiscais vão até 10 MiB na API.
     serverActions: { bodySizeLimit: "11mb" },
   },
+  // O painel agora vive em "/"; mantém links antigos funcionando.
+  async redirects() {
+    return [{ source: "/painel", destination: "/", permanent: false }];
+  },
   async rewrites() {
     return [
       {

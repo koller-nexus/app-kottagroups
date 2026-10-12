@@ -39,7 +39,7 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
     case "VALIDATION_FAILED":
       return "Confira os campos e tente de novo.";
     case "GROUP_ARCHIVED":
-      return "Este grupo está arquivado e não aceita novas despesas.";
+      return "Este grupo está arquivado e não aceita alterações.";
     case "SPLIT_SUM_MISMATCH":
       return "A soma da divisão não bate com o valor da despesa.";
     case "MEMBER_EXISTS":

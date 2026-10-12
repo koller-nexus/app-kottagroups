@@ -2,22 +2,35 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { markSettlementPaidAction } from "@/app/actions/kotta";
+import { deleteGroupAction } from "@/app/actions/groups";
+import { markSettlementPaidAction, undoSettlementPaidAction } from "@/app/actions/kotta";
+import { FormError } from "@/components/auth/field";
 import { Avatar, AvatarStack } from "@/components/app/avatar";
+import { CategoryBars } from "@/components/app/category-bars";
+import { ConfirmDelete } from "@/components/app/confirm-delete";
+import { CopyTextButton } from "@/components/app/copy-text-button";
 import { ExpenseRow } from "@/components/app/expense-row";
 import { GardenField } from "@/components/app/garden-field";
+import { GroupMenu } from "@/components/app/group-menu";
+import { ShoppingListsCard } from "@/components/app/shopping-lists-card";
 import { Price } from "@/components/app/price";
 import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "@/components/app/icons";
 import { PageHeader, SectionLabel } from "@/components/app/page-header";
 import { getGroup, getMe, listCategories, listExpensesPage, listSettlements } from "@/lib/api/kotta";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import type { ApiGroupDetail } from "@/lib/api/types";
 import { categoryLookup } from "@/lib/categories";
 import { formatLongDay, formatMonthYear } from "@/lib/dates";
 import { groupByMonthAndDay, netFor } from "@/lib/kotta-view";
+import { canDeleteGroup, canSettle } from "@/lib/permissions";
 import { displayName, peopleById } from "@/lib/people";
 
 type Tab = "despesas" | "saldos";
+
+const param = (value: string | string[] | undefined) => (typeof value === "string" && value ? value : undefined);
+
+const settleButtonClass =
+  "min-h-11 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary";
 
 async function loadGroup(id: string): Promise<ApiGroupDetail> {
   try {
@@ -40,19 +53,46 @@ export async function generateMetadata({ params }: PageProps<"/grupos/[id]">): P
 
 export default async function GrupoPage({ params, searchParams }: PageProps<"/grupos/[id]">) {
   const { id } = await params;
-  const { aba } = await searchParams;
-  const tab: Tab = aba === "saldos" ? "saldos" : "despesas";
+  const query = await searchParams;
+  const tab: Tab = query.aba === "saldos" ? "saldos" : "despesas";
+  const categoria = param(query.categoria);
+  const cursor = param(query.cursor);
+  const erro = param(query.erro);
 
-  const [me, group, expensePage, settlements, categories] = await Promise.all([
+  const [me, group, recent, filtered, settlements, categories] = await Promise.all([
     getMe(),
     loadGroup(id),
     listExpensesPage(id),
+    categoria || cursor ? listExpensesPage(id, undefined, cursor, categoria) : null,
     listSettlements(id),
     listCategories(),
   ]);
+  const expensePage = filtered ?? recent;
 
   const names = peopleById([group]);
   const category = categoryLookup(categories);
+  const role = group.members.find((m) => m.id === me.id)?.role;
+  const confirmingDelete = param(query.confirmar) === "excluir" && canDeleteGroup(role);
+
+  // ponytail: "Por categoria" e os filtros saem das 100 despesas mais recentes,
+  // não do histórico todo; um endpoint de totais resolveria se fizer falta.
+  const totalsBySlug = new Map<string, number>();
+  for (const expense of recent.items) {
+    totalsBySlug.set(expense.category, (totalsBySlug.get(expense.category) ?? 0) + expense.amountCents);
+  }
+  const categoryTotals = [...totalsBySlug]
+    .map(([slug, cents]) => ({ slug, cents }))
+    .sort((a, b) => b.cents - a.cents);
+  const chipSlugs = categoryTotals.map((t) => t.slug);
+  if (categoria && !chipSlugs.includes(categoria)) chipSlugs.push(categoria);
+
+  const listHref = (params: { categoria?: string; cursor?: string }) => {
+    const search = new URLSearchParams();
+    if (params.categoria) search.set("categoria", params.categoria);
+    if (params.cursor) search.set("cursor", params.cursor);
+    const qs = search.toString();
+    return qs ? `/grupos/${group.id}?${qs}` : `/grupos/${group.id}`;
+  };
   const myNet = netFor(group.balances, me.id);
   const open = settlements.filter((s) => !s.paid);
   const done = settlements.filter((s) => s.paid);
@@ -88,14 +128,35 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
           </span>
         }
         actions={
-          group.archived ? null : (
-            <Link href={`/despesas/nova?grupo=${group.id}`} className="primary-action">
-              <PlusIcon className="size-5" />
-              Nova despesa
-            </Link>
-          )
+          <>
+            {group.archived ? null : (
+              <Link href={`/despesas/nova?grupo=${group.id}`} className="primary-action">
+                <PlusIcon className="size-5" />
+                Nova despesa
+              </Link>
+            )}
+            <GroupMenu group={group} role={role} />
+          </>
         }
       />
+
+      {erro ? (
+        <div className="mt-6">
+          <FormError message={friendlyMessage(erro)} />
+        </div>
+      ) : null}
+
+      {confirmingDelete ? (
+        <ConfirmDelete
+          title={`Excluir ${group.name}?`}
+          action={deleteGroupAction}
+          fields={{ groupId: group.id }}
+          confirmLabel="Excluir grupo"
+          cancelHref={`/grupos/${group.id}`}
+        >
+          O grupo, as despesas e os saldos somem para todos os membros. Não dá para desfazer.
+        </ConfirmDelete>
+      ) : null}
 
       <div
         role="tablist"
@@ -115,13 +176,61 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
           aria-labelledby="despesas"
           className={tab === "despesas" ? "min-w-0" : "hidden min-w-0 lg:block"}
         >
+          {categoryTotals.length > 0 ? (
+            <div className="mb-8">
+              <SectionLabel>Por categoria</SectionLabel>
+              <CategoryBars totals={categoryTotals} category={category} />
+            </div>
+          ) : null}
+
+          <div className="mb-8">
+            <ShoppingListsCard groupId={group.id} archived={group.archived} />
+          </div>
+
           <SectionLabel id="despesas">Despesas</SectionLabel>
+          {chipSlugs.length > 1 || categoria ? (
+            <nav aria-label="Filtrar por categoria" className="-mx-1 mb-5 overflow-x-auto px-1 py-1">
+              <ul className="flex gap-2">
+                {[undefined, ...chipSlugs].map((slug) => {
+                  const active = slug === categoria;
+                  const cat = slug ? category(slug) : null;
+                  return (
+                    <li key={slug ?? "todas"} className="shrink-0">
+                      <Link
+                        href={listHref({ categoria: slug })}
+                        aria-current={active ? "page" : undefined}
+                        scroll={false}
+                        replace
+                        className={`inline-flex min-h-11 items-center gap-1.5 rounded-control border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary ${
+                          active
+                            ? "border-kotta-primary bg-kotta-primary text-white"
+                            : "border-kotta-border bg-kotta-surface text-kotta-text hover:bg-kotta-light-green"
+                        }`}
+                      >
+                        {cat ? <span aria-hidden="true">{cat.emoji}</span> : null}
+                        {cat ? cat.label : "Todas"}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          ) : null}
           {timeline.length === 0 ? (
             <div className="rounded-card border border-dashed border-kotta-border bg-kotta-surface p-8 text-center">
-              <p className="font-semibold text-kotta-text">Nenhuma despesa ainda</p>
-              <p className="mt-1 text-sm text-kotta-muted">
-                Lance a primeira despesa para começar a dividir.
-              </p>
+              {categoria ? (
+                <>
+                  <p className="font-semibold text-kotta-text">Sem despesas nessa categoria</p>
+                  <p className="mt-1 text-sm text-kotta-muted">Escolha outra categoria para ver mais despesas.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-kotta-text">Nenhuma despesa ainda</p>
+                  <p className="mt-1 text-sm text-kotta-muted">
+                    Lance a primeira despesa para começar a dividir.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-8">
@@ -141,12 +250,17 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                             const cat = category(expense.category);
                             return (
                               <li key={expense.id}>
-                                <ExpenseRow
-                                  description={expense.description}
-                                  amountCents={expense.amountCents}
-                                  category={cat}
-                                  meta={`${displayName(names, expense.paidByUserId, me.id)} pagou · ${cat.label}`}
-                                />
+                                <Link
+                                  href={`/despesas/${expense.id}`}
+                                  className="block hover:bg-kotta-overlay focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kotta-primary"
+                                >
+                                  <ExpenseRow
+                                    description={expense.description}
+                                    amountCents={expense.amountCents}
+                                    category={cat}
+                                    meta={`${displayName(names, expense.paidByUserId, me.id)} pagou · ${cat.label}`}
+                                  />
+                                </Link>
                               </li>
                             );
                           })}
@@ -156,10 +270,22 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                   </div>
                 </div>
               ))}
-              {expensePage.hasMore ? (
-                <p className="text-center text-sm text-kotta-muted">
-                  Mostrando as {expensePage.items.length} despesas mais recentes.
-                </p>
+              {expensePage.hasMore || cursor ? (
+                <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                  {cursor ? (
+                    <Link href={listHref({ categoria })} className="secondary-action">
+                      Voltar às mais recentes
+                    </Link>
+                  ) : null}
+                  {expensePage.hasMore && expensePage.nextCursor ? (
+                    <Link
+                      href={listHref({ categoria, cursor: expensePage.nextCursor })}
+                      className="secondary-action"
+                    >
+                      Carregar mais
+                    </Link>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           )}
@@ -191,7 +317,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
             ) : (
               <ul className="flex flex-col gap-3">
                 {open.map((settlement) => {
-                  const involvesMe = settlement.from === me.id || settlement.to === me.id;
+                  const involvesMe = canSettle(me.id, settlement);
                   return (
                     <li
                       key={settlement.id}
@@ -219,15 +345,21 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                         </span>
                       </p>
                       {involvesMe ? (
-                        <form action={markSettlementPaidAction} className="mt-3">
+                        <form action={markSettlementPaidAction} className="mt-1">
                           <input type="hidden" name="settlementId" value={settlement.id} />
-                          <button
-                            type="submit"
-                            className="text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-                          >
+                          <button type="submit" className={settleButtonClass}>
                             Marcar como pago
                           </button>
                         </form>
+                      ) : null}
+                      {settlement.to === me.id && me.pixKey ? (
+                        <div className="mt-2">
+                          <CopyTextButton
+                            text={me.pixKey}
+                            label="Copiar minha chave Pix"
+                            copiedLabel="Chave Pix copiada"
+                          />
+                        </div>
                       ) : null}
                     </li>
                   );
@@ -247,6 +379,14 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                       {displayName(names, settlement.to, me.id, { object: true })}
                     </span>
                     <Price cents={settlement.amountCents} size={15} settled />
+                    {canSettle(me.id, settlement) ? (
+                      <form action={undoSettlementPaidAction}>
+                        <input type="hidden" name="settlementId" value={settlement.id} />
+                        <button type="submit" className={settleButtonClass}>
+                          Desfazer
+                        </button>
+                      </form>
+                    ) : null}
                   </li>
                 ))}
               </ul>

@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addMemberAction, promoteMemberAction, removeMemberAction } from "@/app/actions/groups";
 import { FormError } from "@/components/auth/field";
 import { Avatar } from "@/components/app/avatar";
-import { ArrowLeftIcon } from "@/components/app/icons";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { getGroup, getMe, listGroupDetails } from "@/lib/api/kotta";
 import type { ApiMemberRole } from "@/lib/api/types";
@@ -49,26 +47,19 @@ export default async function MembrosPage({ params, searchParams }: PageProps<"/
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <Link
-        href={`/grupos/${group.id}`}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-      >
-        <ArrowLeftIcon className="size-4" />
-        {group.name}
-      </Link>
-      <PageHeader
-        title="Membros"
-        description={`${group.members.length} ${group.members.length === 1 ? "pessoa" : "pessoas"} em ${group.name}`}
-      />
-
+    <Page
+      width="reading"
+      back={{ href: `/grupos/${group.id}`, label: group.name }}
+      title="Membros"
+      description={`${group.members.length} ${group.members.length === 1 ? "pessoa" : "pessoas"} em ${group.name}`}
+    >
       {typeof erro === "string" && erro ? (
-        <div className="mt-6">
+        <div>
           <FormError message={friendlyMessage(erro)} />
         </div>
       ) : null}
 
-      <ul className="mt-8 divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
+      <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
         {group.members.map((member) => (
           <li key={member.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
             <Avatar person={member} />
@@ -109,7 +100,7 @@ export default async function MembrosPage({ params, searchParams }: PageProps<"/
       </ul>
 
       {manage ? (
-        <section aria-labelledby="adicionar" className="mt-10">
+        <section aria-labelledby="adicionar">
           <SectionLabel id="adicionar">Adicionar</SectionLabel>
           {toAdd.length === 0 ? (
             <p className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
@@ -144,6 +135,6 @@ export default async function MembrosPage({ params, searchParams }: PageProps<"/
           )}
         </section>
       ) : null}
-    </div>
+    </Page>
   );
 }

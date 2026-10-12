@@ -43,3 +43,7 @@ pnpm build
 ```
 
 Validação visual: `specs/001-kotta-web-visual/quickstart.md`.
+
+## Agentes de IA
+
+O projeto usa Claude Code. As instruções ficam em [`AGENTS.md`](./AGENTS.md), importado por [`CLAUDE.md`](./CLAUDE.md). Skills em `.agents/skills/`; comandos do Spec Kit também em `.claude/skills/`.

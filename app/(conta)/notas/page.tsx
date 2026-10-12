@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AutoRefresh } from "@/components/app/auto-refresh";
 import { InvoiceStatus } from "@/components/app/invoice-status";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
 import { InvoiceUploadForm } from "@/components/forms/invoice-upload-form";
 import { listInvoicesPage } from "@/lib/api/kotta";
@@ -19,20 +19,18 @@ export default async function NotasPage({ searchParams }: PageProps<"/notas">) {
   const page = await listInvoicesPage(typeof cursor === "string" ? cursor : undefined);
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHeader
-        title="Notas"
-        description="Envie a foto de uma nota fiscal e a Kotta Groups lê o estabelecimento, a data e os itens."
-      />
-
-      <section aria-labelledby="enviar" className="mt-8">
+    <Page
+      title="Notas"
+      description="Envie a foto de uma nota fiscal e a Kotta Groups lê o estabelecimento, a data e os itens."
+    >
+      <section aria-labelledby="enviar">
         <SectionLabel id="enviar">Enviar nota</SectionLabel>
         <div className="rounded-card border border-kotta-border bg-kotta-surface p-6">
           <InvoiceUploadForm />
         </div>
       </section>
 
-      <section aria-labelledby="suas-notas" className="mt-8">
+      <section aria-labelledby="suas-notas">
         <SectionLabel id="suas-notas">Suas notas</SectionLabel>
         {page.items.some((invoice) => isInvoicePending(invoice.status)) ? <AutoRefresh /> : null}
         {page.items.length === 0 ? (
@@ -81,6 +79,6 @@ export default async function NotasPage({ searchParams }: PageProps<"/notas">) {
           ) : null}
         </div>
       </section>
-    </div>
+    </Page>
   );
 }

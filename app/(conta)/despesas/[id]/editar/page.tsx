@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PageHeader } from "@/components/app/page-header";
+import { Page } from "@/components/app/page-header";
 import { NewExpenseForm } from "@/components/forms/new-expense-form";
 import { ApiError } from "@/lib/api/errors";
 import { getExpense, getGroup, getMe, listCategories } from "@/lib/api/kotta";
@@ -25,9 +25,8 @@ export default async function EditarDespesaPage({ params }: PageProps<"/despesas
   if (group.archived || !canEditExpense(me.id, expense.createdByUserId, role)) notFound();
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <PageHeader title="Editar despesa" description="Os saldos do grupo são recalculados ao salvar." />
-      <div className="mt-8 rounded-card border border-kotta-border bg-kotta-surface p-6 sm:p-8">
+    <Page width="reading" title="Editar despesa" description="Os saldos do grupo são recalculados ao salvar.">
+      <div className="rounded-card border border-kotta-border bg-kotta-surface p-6 sm:p-8">
         <NewExpenseForm
           groups={[
             {
@@ -51,6 +50,6 @@ export default async function EditarDespesaPage({ params }: PageProps<"/despesas
           }}
         />
       </div>
-    </div>
+    </Page>
   );
 }

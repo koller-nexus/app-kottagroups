@@ -14,8 +14,8 @@ import { GardenField } from "@/components/app/garden-field";
 import { GroupMenu } from "@/components/app/group-menu";
 import { ShoppingListsCard } from "@/components/app/shopping-lists-card";
 import { Price } from "@/components/app/price";
-import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "@/components/app/icons";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { ArrowRightIcon, PlusIcon } from "@/components/app/icons";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import {
   getGroup,
   getGroupBalances,
@@ -112,49 +112,40 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
   const timeline = groupByMonthAndDay(expensePage.items);
 
   return (
-    <>
-      <Link
-        href="/grupos"
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-      >
-        <ArrowLeftIcon className="size-4" />
-        Grupos
-      </Link>
-
-      <PageHeader
-        leading={
-          <span
-            aria-hidden="true"
-            className="flex size-16 shrink-0 items-center justify-center rounded-card bg-kotta-light-green text-4xl sm:size-20 sm:text-5xl"
-          >
-            {group.emoji}
+    <Page
+      back={{ href: "/grupos", label: "Grupos" }}
+      leading={
+        <span
+          aria-hidden="true"
+          className="flex size-16 shrink-0 items-center justify-center rounded-card bg-kotta-light-green text-4xl sm:size-20 sm:text-5xl"
+        >
+          {group.emoji}
+        </span>
+      }
+      title={group.name}
+      description={
+        <span className="flex flex-wrap items-center gap-3">
+          <AvatarStack people={group.members} />
+          <span className="text-[13px]">
+            {group.members.length} {group.members.length === 1 ? "pessoa" : "pessoas"}
+            {group.archived ? " · arquivado" : ""}
           </span>
-        }
-        title={group.name}
-        description={
-          <span className="flex flex-wrap items-center gap-3">
-            <AvatarStack people={group.members} />
-            <span className="text-[13px]">
-              {group.members.length} {group.members.length === 1 ? "pessoa" : "pessoas"}
-              {group.archived ? " · arquivado" : ""}
-            </span>
-          </span>
-        }
-        actions={
-          <>
-            {group.archived ? null : (
-              <Link href={`/despesas/nova?grupo=${group.id}`} className="primary-action">
-                <PlusIcon className="size-5" />
-                Nova despesa
-              </Link>
-            )}
-            <GroupMenu group={group} role={role} />
-          </>
-        }
-      />
-
+        </span>
+      }
+      actions={
+        <>
+          {group.archived ? null : (
+            <Link href={`/despesas/nova?grupo=${group.id}`} className="primary-action">
+              <PlusIcon className="size-5" />
+              Nova despesa
+            </Link>
+          )}
+          <GroupMenu group={group} role={role} />
+        </>
+      }
+    >
       {erro ? (
-        <div className="mt-6">
+        <div>
           <FormError message={friendlyMessage(erro)} />
         </div>
       ) : null}
@@ -174,7 +165,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
       <div
         role="tablist"
         aria-label="Seções do grupo"
-        className="mt-8 grid grid-cols-2 rounded-control border border-kotta-border bg-kotta-surface p-1 lg:hidden"
+        className="grid grid-cols-2 rounded-control border border-kotta-border bg-kotta-surface p-1 lg:hidden"
       >
         <TabLink id={group.id} tab="despesas" current={tab}>
           Despesas
@@ -184,7 +175,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
         </TabLink>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-10 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
         <section
           aria-labelledby="despesas"
           className={tab === "despesas" ? "min-w-0" : "hidden min-w-0 lg:block"}
@@ -439,7 +430,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
           </section>
         </aside>
       </div>
-    </>
+    </Page>
   );
 }
 

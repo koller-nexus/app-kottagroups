@@ -69,7 +69,7 @@ Tokens em `app/globals.css` (classes `kotta-*` do Tailwind) e `lib/theme.ts`.
 - Plano: sem sombras em cartões.
 - Botão primário verde com 52px de altura; botão tonal leaf field.
 
-## Painel (`/painel`)
+## Painel (`/`)
 
 Igual à dashboard do app (`src/screens/Dashboard`), nesta ordem:
 
@@ -78,3 +78,16 @@ Igual à dashboard do app (`src/screens/Dashboard`), nesta ordem:
 3. Folha "Gastos dos grupos": barras do mês passado e deste mês.
 4. "Últimas quitações": até 3 que envolvem você, com Pago ou Pendente.
 5. "Seus grupos · N": emoji, "N pessoas" e chip de saldo.
+
+Abaixo de 1024 px, uma coluna nesta ordem. No desktop (≥ 1024 px), duas colunas: campo verde e
+"Gastos dos grupos" à esquerda; "Últimas quitações" e "Seus grupos" à direita. A frase de apoio é
+a descrição da página. A prévia sem login em `/` segue o mesmo arranjo.
+
+## Larguras e espaços da web
+
+- Duas larguras de conteúdo (`app/globals.css`): **visão** `max-w-view` (1120 px) para Painel,
+  listas, grupo, notificações e perfil; **leitura** `max-w-reading` (720 px), alinhada à esquerda,
+  para formulários e detalhes.
+- Toda página logada usa `<Page>` (`components/app/page-header.tsx`): título, 32 px, seções a
+  32 px (celular) / 48 px (desktop).
+- Margens laterais: 16 px (< 640 px), 32 px (640–1023 px), 40 px (≥ 1024 px).

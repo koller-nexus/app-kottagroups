@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { logoutAction } from "@/app/actions/auth";
+import { LogoutButton } from "@/components/auth/logout-button";
 import { ResendConfirmation } from "@/components/auth/resend-confirmation";
 import { getMe } from "@/lib/api/kotta";
 
@@ -28,11 +28,12 @@ export default async function ConfirmeSeuEmailPage() {
         </Link>
         <ResendConfirmation />
       </div>
-      <form action={logoutAction} className="mt-4 text-center">
-        <button type="submit" className="text-sm font-semibold text-kotta-muted hover:underline">
-          Entrar com outra conta
-        </button>
-      </form>
+      <div className="mt-4 text-center">
+        <LogoutButton
+          label="Entrar com outra conta"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-kotta-muted hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary disabled:opacity-60"
+        />
+      </div>
     </>
   );
 }

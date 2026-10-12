@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Avatar } from "@/components/app/avatar";
+import { LogoutButton } from "@/components/auth/logout-button";
 import { NotificationsButton } from "@/components/app/notifications-button";
 import { MobileTabBar, SidebarNav } from "@/components/app/sidebar-nav";
+import { SubmitLostNotice } from "@/components/app/submit-lost-notice";
 import { getMe, getNotificationCount, listGroups } from "@/lib/api/kotta";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
@@ -22,34 +25,40 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         Pular para o conteúdo
       </a>
 
-      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col gap-10 overflow-y-auto border-r border-kotta-border bg-kotta-surface px-4 py-6 lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col gap-10 overflow-hidden border-r border-kotta-border bg-kotta-surface px-4 py-6 lg:flex">
         <div className="flex items-center justify-between">
           <Brand />
           <NotificationsButton count={pendingCount} />
         </div>
         <SidebarNav groupLinks={groupLinks} />
-        <Link
-          href="/perfil"
-          className="flex items-center gap-3 rounded-control border border-kotta-border p-3 hover:bg-kotta-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-        >
-          <Avatar person={me} />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-kotta-text">{me.name}</span>
-            <span className="block truncate text-xs text-kotta-muted">{me.email}</span>
-          </span>
-        </Link>
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/perfil"
+            className="flex items-center gap-3 rounded-control border border-kotta-border p-3 hover:bg-kotta-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
+          >
+            <Avatar person={me} />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-kotta-text">{me.name}</span>
+              <span className="block truncate text-xs text-kotta-muted">{me.email}</span>
+            </span>
+          </Link>
+          <LogoutButton />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-kotta-border bg-kotta-surface/95 px-5 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-kotta-border bg-kotta-surface/95 px-4 backdrop-blur sm:px-8 lg:hidden">
           <Brand />
           <NotificationsButton count={pendingCount} />
         </header>
 
         <main
           id="conteudo"
-          className="mx-auto w-full max-w-6xl flex-1 px-5 pt-6 pb-28 sm:px-8 lg:px-10 lg:pt-10 lg:pb-16"
+          className="mx-auto w-full max-w-view flex-1 px-4 pt-6 pb-[calc(4rem+env(safe-area-inset-bottom)+2rem)] sm:px-8 lg:px-10 lg:pt-10 lg:pb-16"
         >
+          <Suspense fallback={null}>
+            <SubmitLostNotice />
+          </Suspense>
           {children}
         </main>
       </div>

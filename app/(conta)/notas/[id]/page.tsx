@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/app/auto-refresh";
-import { ArrowLeftIcon } from "@/components/app/icons";
 import { InvoiceStatus } from "@/components/app/invoice-status";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
 import { ApiError } from "@/lib/api/errors";
 import { getInvoice } from "@/lib/api/kotta";
@@ -37,30 +35,24 @@ export default async function NotaPage({ params }: PageProps<"/notas/[id]">) {
   const items = ready ? parseInvoiceItems(invoice.items) : [];
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <Page
+      width="reading"
+      back={{ href: "/notas", label: "Notas" }}
+      title={invoice.establishment || "Nota fiscal"}
+      description={invoice.originalName}
+      actions={<InvoiceStatus status={invoice.status} />}
+    >
       {pending ? <AutoRefresh /> : null}
-      <Link
-        href="/notas"
-        className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-      >
-        <ArrowLeftIcon className="size-4" />
-        Notas
-      </Link>
-      <PageHeader
-        title={invoice.establishment || "Nota fiscal"}
-        description={invoice.originalName}
-        actions={<InvoiceStatus status={invoice.status} />}
-      />
-
-      <div aria-live="polite">
+      {/* Vazio quando a nota está pronta; escondido para não somar espaço na pilha. */}
+      <div aria-live="polite" className="empty:hidden">
         {pending ? (
-          <p className="mt-8 rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
+          <p className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
             Estamos lendo a nota. Esta página se atualiza sozinha.
           </p>
         ) : null}
 
         {invoice.status === "failed" ? (
-          <p role="alert" className="mt-8 rounded-card bg-kotta-danger-bg p-6 text-sm text-kotta-danger">
+          <p role="alert" className="rounded-card bg-kotta-danger-bg p-6 text-sm text-kotta-danger">
             {invoiceErrorMessage(invoice.errorMessage)}
           </p>
         ) : null}
@@ -69,13 +61,13 @@ export default async function NotaPage({ params }: PageProps<"/notas/[id]">) {
       {ready ? (
         <>
           {invoice.needsReview || invoice.status === "needs_review" ? (
-            <p className="mt-8 rounded-card bg-kotta-danger-bg p-6 text-sm text-kotta-danger">
+            <p className="rounded-card bg-kotta-danger-bg p-6 text-sm text-kotta-danger">
               Confira os dados antes de usar: a leitura pode ter errado
               {invoice.riskLabel ? ` (risco ${invoiceRiskLabel(invoice.riskLabel)})` : ""}.
             </p>
           ) : null}
 
-          <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-card border border-kotta-border bg-kotta-border sm:grid-cols-3">
+          <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-card border border-kotta-border bg-kotta-border sm:grid-cols-3">
             <div className="bg-kotta-surface p-5">
               <dt className="text-[13px] font-semibold text-kotta-muted">Emitida em</dt>
               <dd className="mt-1 text-base text-kotta-text">
@@ -96,7 +88,7 @@ export default async function NotaPage({ params }: PageProps<"/notas/[id]">) {
             </div>
           </dl>
 
-          <section aria-labelledby="itens" className="mt-8">
+          <section aria-labelledby="itens">
             <SectionLabel id="itens">Itens</SectionLabel>
             {items.length === 0 ? (
               <p className="text-sm text-kotta-muted">Não conseguimos separar os itens desta nota.</p>
@@ -133,6 +125,6 @@ export default async function NotaPage({ params }: PageProps<"/notas/[id]">) {
           </section>
         </>
       ) : null}
-    </div>
+    </Page>
   );
 }

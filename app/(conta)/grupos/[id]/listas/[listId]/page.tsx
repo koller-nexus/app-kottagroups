@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteReceiptAction, deleteShoppingListAction } from "@/app/actions/shopping";
-import { ArrowLeftIcon } from "@/components/app/icons";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import { ShoppingProgressBar } from "@/components/app/shopping-lists-card";
 import {
   AddShoppingItemForm,
@@ -51,32 +49,26 @@ export default async function ListaPage({ params }: PageProps<"/grupos/[id]/list
   const receipt = list.receipt ?? null;
 
   return (
-    <>
-      <Link href={`/grupos/${group.id}`} className={`mb-6 gap-2 text-kotta-primary ${linkClass}`}>
-        <ArrowLeftIcon className="size-4" />
-        {group.name}
-      </Link>
-
-      <PageHeader
-        title={list.name}
-        description={
-          <span className="flex max-w-sm flex-col gap-2">
-            <span className="text-[13px]">
-              {total === 0 ? "Nenhum item ainda" : `${progressLabel(completed, total)} comprados`}
-              {readOnly ? " · grupo arquivado" : ""}
-            </span>
-            <ShoppingProgressBar completed={completed} total={total} />
+    <Page
+      back={{ href: `/grupos/${group.id}`, label: group.name }}
+      title={list.name}
+      description={
+        <span className="flex max-w-sm flex-col gap-2">
+          <span className="text-[13px]">
+            {total === 0 ? "Nenhum item ainda" : `${progressLabel(completed, total)} comprados`}
+            {readOnly ? " · grupo arquivado" : ""}
           </span>
-        }
-      />
-
+          <ShoppingProgressBar completed={completed} total={total} />
+        </span>
+      }
+    >
       {readOnly ? (
-        <p className="mt-6 rounded-control border border-kotta-border bg-kotta-surface px-4 py-3 text-sm text-kotta-muted">
+        <p className="rounded-control border border-kotta-border bg-kotta-surface px-4 py-3 text-sm text-kotta-muted">
           Este grupo está arquivado. A lista fica só para consulta.
         </p>
       ) : null}
 
-      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
         <section aria-labelledby="itens" className="min-w-0">
           <SectionLabel id="itens">Itens</SectionLabel>
           {total === 0 ? (
@@ -146,7 +138,7 @@ export default async function ListaPage({ params }: PageProps<"/grupos/[id]/list
           )}
         </aside>
       </div>
-    </>
+    </Page>
   );
 }
 

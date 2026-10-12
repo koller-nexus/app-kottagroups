@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeftIcon, PlusIcon } from "@/components/app/icons";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { PlusIcon } from "@/components/app/icons";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import { DeleteCategoryButton } from "@/components/forms/delete-category-button";
 import { listCategories } from "@/lib/api/kotta";
 
@@ -30,26 +30,18 @@ export default async function CategoriasPage() {
       .map(({ id: optionId, label, emoji }) => ({ id: optionId, label, emoji }));
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Link
-        href="/perfil"
-        className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-      >
-        <ArrowLeftIcon className="size-4" />
-        Perfil
-      </Link>
-      <PageHeader
-        title="Categorias"
-        description="Organize suas despesas do seu jeito. As categorias valem para todo mundo que usa a Kotta Groups."
-        actions={
-          <Link href="/perfil/categorias/nova" className="primary-action">
-            <PlusIcon className="size-5" />
-            Nova categoria
-          </Link>
-        }
-      />
-
-      <section aria-labelledby="personalizadas" className="mt-8">
+    <Page
+      back={{ href: "/perfil", label: "Perfil" }}
+      title="Categorias"
+      description="Organize suas despesas do seu jeito. As categorias valem para todo mundo que usa a Kotta Groups."
+      actions={
+        <Link href="/perfil/categorias/nova" className="primary-action">
+          <PlusIcon className="size-5" />
+          Nova categoria
+        </Link>
+      }
+    >
+      <section aria-labelledby="personalizadas">
         <SectionLabel id="personalizadas">Personalizadas</SectionLabel>
         {custom.length === 0 ? (
           <p className="rounded-card border border-dashed border-kotta-border bg-kotta-surface p-8 text-center text-sm text-kotta-muted">
@@ -81,7 +73,7 @@ export default async function CategoriasPage() {
         )}
       </section>
 
-      <section aria-labelledby="padrao" className="mt-8">
+      <section aria-labelledby="padrao">
         <SectionLabel id="padrao">Padrão</SectionLabel>
         <p className="mb-3 text-sm text-kotta-muted">Categorias padrão não podem ser alteradas.</p>
         <ul className="divide-y divide-kotta-border rounded-card bg-kotta-surface px-4">
@@ -95,6 +87,6 @@ export default async function CategoriasPage() {
           ))}
         </ul>
       </section>
-    </div>
+    </Page>
   );
 }

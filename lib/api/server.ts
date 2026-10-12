@@ -1,9 +1,12 @@
 import "server-only";
+import { headers as requestHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 import { ApiError, parseErrorBody } from "@/lib/api/errors";
 import { getSessionToken } from "@/lib/api/session";
+import { safeNextPath } from "@/lib/safe-next";
+import { expiredSessionUrl, PATH_HEADER } from "@/lib/session-flow";
 
-function apiOrigin(): string {
+export function apiOrigin(): string {
   return (process.env.API_ORIGIN ?? "https://api.kottagroups.com.br").replace(/\/$/, "");
 }
 
@@ -27,7 +30,9 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
 
   const method = (rest.method ?? "GET").toUpperCase();
   const token = auth ? await getSessionToken() : undefined;
-  if (auth && !token) redirect("/entrar");
+  if (auth && !token) {
+    redirect(`/entrar?${new URLSearchParams({ next: safeNextPath(await currentPath()) })}`);
+  }
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const isForm = body instanceof FormData;
   if (body !== undefined && !isForm) headers.set("Content-Type", "application/json");
@@ -60,7 +65,7 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
     );
     if (auth && response.status === 401) {
       // O cookie só pode ser apagado num Route Handler.
-      redirect("/sair?motivo=expirada");
+      redirect(expiredSessionUrl(await currentPath(), method));
     }
     if (auth && response.status === 403 && code === "EMAIL_NOT_CONFIRMED") {
       redirect("/confirme-seu-email");
@@ -71,6 +76,11 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   if (response.status === 204) return undefined as T;
   const payload = (await response.json()) as { data?: T };
   return (payload && typeof payload === "object" && "data" in payload ? payload.data : payload) as T;
+}
+
+/** Página que fez a chamada, gravada pelo proxy.ts; vira o "voltar para" ao entrar de novo. */
+async function currentPath(): Promise<string | null> {
+  return (await requestHeaders()).get(PATH_HEADER);
 }
 
 /** Código para respostas de erro sem o envelope JSON da API. */

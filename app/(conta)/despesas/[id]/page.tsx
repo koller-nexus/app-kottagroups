@@ -5,8 +5,7 @@ import { deleteExpenseAction } from "@/app/actions/expenses";
 import { FormError } from "@/components/auth/field";
 import { Avatar } from "@/components/app/avatar";
 import { ConfirmDelete } from "@/components/app/confirm-delete";
-import { ArrowLeftIcon } from "@/components/app/icons";
-import { PageHeader, SectionLabel } from "@/components/app/page-header";
+import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { getExpense, getGroup, getMe, listCategories } from "@/lib/api/kotta";
@@ -49,46 +48,38 @@ export default async function DespesaPage({ params, searchParams }: PageProps<"/
   const day = formatLongDay(localDay(expense.createdAt));
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <Link
-        href={`/grupos/${group.id}`}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-      >
-        <ArrowLeftIcon className="size-4" />
-        {group.emoji} {group.name}
-      </Link>
-
-      <PageHeader
-        leading={
-          <span
-            aria-hidden="true"
-            className="flex size-16 shrink-0 items-center justify-center rounded-card bg-kotta-light-green text-4xl"
-          >
-            {cat.emoji}
-          </span>
-        }
-        title={expense.description}
-        description={`${cat.label} · ${day.charAt(0).toUpperCase()}${day.slice(1)}`}
-        actions={
-          editable ? (
-            <>
-              <Link href={`/despesas/${expense.id}/editar`} className="secondary-action">
-                Editar
-              </Link>
-              <Link
-                href={`/despesas/${expense.id}?confirmar=excluir`}
-                replace
-                className="secondary-action text-kotta-danger!"
-              >
-                Excluir
-              </Link>
-            </>
-          ) : null
-        }
-      />
-
+    <Page
+      width="reading"
+      back={{ href: `/grupos/${group.id}`, label: <>{group.emoji} {group.name}</> }}
+      leading={
+        <span
+          aria-hidden="true"
+          className="flex size-16 shrink-0 items-center justify-center rounded-card bg-kotta-light-green text-4xl"
+        >
+          {cat.emoji}
+        </span>
+      }
+      title={expense.description}
+      description={`${cat.label} · ${day.charAt(0).toUpperCase()}${day.slice(1)}`}
+      actions={
+        editable ? (
+          <>
+            <Link href={`/despesas/${expense.id}/editar`} className="secondary-action">
+              Editar
+            </Link>
+            <Link
+              href={`/despesas/${expense.id}?confirmar=excluir`}
+              replace
+              className="secondary-action text-kotta-danger!"
+            >
+              Excluir
+            </Link>
+          </>
+        ) : null
+      }
+    >
       {typeof erro === "string" && erro ? (
-        <div className="mt-6">
+        <div>
           <FormError message={friendlyMessage(erro)} />
         </div>
       ) : null}
@@ -105,7 +96,7 @@ export default async function DespesaPage({ params, searchParams }: PageProps<"/
         </ConfirmDelete>
       ) : null}
 
-      <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-card border border-kotta-border bg-kotta-border sm:grid-cols-2">
+      <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-card border border-kotta-border bg-kotta-border sm:grid-cols-2">
         <div className="bg-kotta-surface p-5">
           <dt className="text-[13px] font-semibold text-kotta-muted">Valor</dt>
           <dd className="mt-1">
@@ -130,7 +121,7 @@ export default async function DespesaPage({ params, searchParams }: PageProps<"/
         </div>
       </dl>
 
-      <section aria-labelledby="partes" className="mt-10">
+      <section aria-labelledby="partes">
         <SectionLabel id="partes">Parte de cada um</SectionLabel>
         <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
           {expense.shares.map((share) => (
@@ -144,6 +135,6 @@ export default async function DespesaPage({ params, searchParams }: PageProps<"/
           ))}
         </ul>
       </section>
-    </div>
+    </Page>
   );
 }

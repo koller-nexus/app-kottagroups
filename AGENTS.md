@@ -21,7 +21,7 @@ Do not replace that copy with “Em breve”. “Em breve” is a separate label
 
 ## Installed skills
 
-Use these skills when the task matches. Prefer the project copies under `.agents/skills/` and `.cursor/skills/`.
+Use these skills when the task matches. Project copies live under `.agents/skills/` (Spec Kit commands also under `.claude/skills/`).
 
 ### Product UI
 
@@ -37,13 +37,13 @@ Use these skills when the task matches. Prefer the project copies under `.agents
 
 ### Spec Kit
 
-- @.cursor/skills/speckit-specify/SKILL.md
-- @.cursor/skills/speckit-plan/SKILL.md
-- @.cursor/skills/speckit-tasks/SKILL.md
-- @.cursor/skills/speckit-implement/SKILL.md
-- @.cursor/skills/speckit-constitution/SKILL.md
-- @.cursor/skills/speckit-clarify/SKILL.md
-- @.cursor/skills/speckit-analyze/SKILL.md
-- @.cursor/skills/speckit-checklist/SKILL.md
-- @.cursor/skills/speckit-converge/SKILL.md
-- @.cursor/skills/speckit-taskstoissues/SKILL.md
+- @.agents/skills/speckit-specify/SKILL.md
+- @.agents/skills/speckit-plan/SKILL.md
+- @.agents/skills/speckit-tasks/SKILL.md
+- @.agents/skills/speckit-implement/SKILL.md
+- @.agents/skills/speckit-constitution/SKILL.md
+- @.agents/skills/speckit-clarify/SKILL.md
+- @.agents/skills/speckit-analyze/SKILL.md
+- @.agents/skills/speckit-checklist/SKILL.md
+- @.agents/skills/speckit-converge/SKILL.md
+- @.agents/skills/speckit-taskstoissues/SKILL.md

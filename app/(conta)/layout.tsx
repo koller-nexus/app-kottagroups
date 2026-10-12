@@ -3,12 +3,15 @@ import Link from "next/link";
 import { Avatar } from "@/components/app/avatar";
 import { NotificationsButton } from "@/components/app/notifications-button";
 import { MobileTabBar, SidebarNav } from "@/components/app/sidebar-nav";
-import { CURRENT_USER_ID, getMember, groups } from "@/lib/demo-app";
+import { getMe, getNotificationCount, listGroups } from "@/lib/api/kotta";
 
-const groupLinks = groups.map(({ id, name, emoji }) => ({ id, name, emoji }));
-
-export default function ContaLayout({ children }: LayoutProps<"/">) {
-  const me = getMember(CURRENT_USER_ID);
+export default async function ContaLayout({ children }: LayoutProps<"/">) {
+  const [me, groups, pendingCount] = await Promise.all([
+    getMe(),
+    listGroups(),
+    getNotificationCount(),
+  ]);
+  const groupLinks = groups.map(({ id, name, emoji }) => ({ id, name, emoji }));
 
   return (
     <div className="flex min-h-screen flex-1 bg-kotta-bg">
@@ -19,21 +22,20 @@ export default function ContaLayout({ children }: LayoutProps<"/">) {
         Pular para o conteúdo
       </a>
 
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-10 border-r border-kotta-border bg-kotta-surface px-4 py-6 lg:flex">
-        <Brand />
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col gap-10 overflow-y-auto border-r border-kotta-border bg-kotta-surface px-4 py-6 lg:flex">
+        <div className="flex items-center justify-between">
+          <Brand />
+          <NotificationsButton count={pendingCount} />
+        </div>
         <SidebarNav groupLinks={groupLinks} />
         <Link
           href="/perfil"
           className="flex items-center gap-3 rounded-control border border-kotta-border p-3 hover:bg-kotta-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
         >
-          <Avatar member={me} />
+          <Avatar person={me} />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-kotta-text">
-              {me.name}
-            </span>
-            <span className="block truncate font-mono text-[11px] text-kotta-muted">
-              {me.email}
-            </span>
+            <span className="block truncate text-sm font-semibold text-kotta-text">{me.name}</span>
+            <span className="block truncate font-mono text-[11px] text-kotta-muted">{me.email}</span>
           </span>
         </Link>
       </aside>
@@ -41,7 +43,7 @@ export default function ContaLayout({ children }: LayoutProps<"/">) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-kotta-border bg-kotta-surface/95 px-5 backdrop-blur lg:hidden">
           <Brand />
-          <NotificationsButton />
+          <NotificationsButton count={pendingCount} />
         </header>
 
         <main
@@ -61,7 +63,7 @@ function Brand() {
   return (
     <Link
       href="/painel"
-      className="flex items-center gap-2.5 px-1 font-display text-[22px] font-bold leading-none text-kotta-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
+      className="flex items-center gap-2.5 whitespace-nowrap px-1 font-display text-[22px] font-bold leading-none text-kotta-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kotta-primary"
     >
       <Image
         src="/kotta-app-icon-green-nobg.png"

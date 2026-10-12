@@ -1,56 +1,61 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import { markSettlementPaidAction } from "@/app/actions/kotta";
 import { Avatar, AvatarStack } from "@/components/app/avatar";
-import { ArrowLeftIcon, ArrowRightIcon, PlusIcon, SettingsIcon } from "@/components/app/icons";
+import { ExpenseRow } from "@/components/app/expense-row";
+import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "@/components/app/icons";
 import { PageHeader, SectionLabel } from "@/components/app/page-header";
-import {
-  CURRENT_USER_ID,
-  firstName,
-  getCategory,
-  getGroup,
-  getMember,
-  groupExpenses,
-  groupNetBalances,
-  groupTotalCents,
-  groupTransfers,
-  groups,
-  myShareCents,
-  type Expense,
-} from "@/lib/demo-app";
+import { getGroup, getMe, listCategories, listExpensesPage, listSettlements } from "@/lib/api/kotta";
+import { ApiError } from "@/lib/api/errors";
+import type { ApiGroupDetail } from "@/lib/api/types";
+import { categoryLookup } from "@/lib/categories";
 import { formatLongDay, formatMonthYear } from "@/lib/dates";
+import { groupByMonthAndDay, netFor } from "@/lib/kotta-view";
 import { formatBRL } from "@/lib/money";
+import { displayName, peopleById } from "@/lib/people";
 
 type Tab = "despesas" | "saldos";
 
-export function generateStaticParams() {
-  return groups.map((group) => ({ id: group.id }));
+async function loadGroup(id: string): Promise<ApiGroupDetail> {
+  try {
+    return await getGroup(id);
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 404 || error.status === 403)) notFound();
+    throw error;
+  }
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/grupos/[id]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/grupos/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const group = getGroup(id);
-  return { title: group ? `${group.name} — Kotta Groups` : "Grupo — Kotta Groups" };
+  try {
+    const group = await getGroup(id);
+    return { title: `${group.name} — Kotta Groups` };
+  } catch {
+    return { title: "Grupo — Kotta Groups" };
+  }
 }
 
-export default async function GrupoPage({
-  params,
-  searchParams,
-}: PageProps<"/grupos/[id]">) {
+export default async function GrupoPage({ params, searchParams }: PageProps<"/grupos/[id]">) {
   const { id } = await params;
   const { aba } = await searchParams;
-  const group = getGroup(id);
-  if (!group) notFound();
-
   const tab: Tab = aba === "saldos" ? "saldos" : "despesas";
-  const list = groupExpenses(group.id);
-  const net = groupNetBalances(group);
-  const transfers = groupTransfers(group);
-  const myNet = net[CURRENT_USER_ID] ?? 0;
-  const memberList = group.memberIds.map(getMember);
+
+  const [me, group, expensePage, settlements, categories] = await Promise.all([
+    getMe(),
+    loadGroup(id),
+    listExpensesPage(id),
+    listSettlements(id),
+    listCategories(),
+  ]);
+
+  const names = peopleById([group]);
+  const category = categoryLookup(categories);
+  const myNet = netFor(group.balances, me.id);
+  const open = settlements.filter((s) => !s.paid);
+  const done = settlements.filter((s) => s.paid);
+  const timeline = groupByMonthAndDay(expensePage.items);
 
   return (
     <>
@@ -74,25 +79,20 @@ export default async function GrupoPage({
         title={group.name}
         description={
           <span className="flex flex-wrap items-center gap-3">
-            <AvatarStack members={memberList} />
+            <AvatarStack people={group.members} />
             <span className="font-mono text-xs">
-              {memberList.length} membros · {formatBRL(groupTotalCents(group.id))} gastos
+              {group.members.length === 1 ? "1 membro" : `${group.members.length} membros`}
+              {group.archived ? " · arquivado" : ""}
             </span>
           </span>
         }
         actions={
-          <>
-            {/* TODO: abrir edição do grupo e gestão de membros. */}
-            <button type="button" className="secondary-action" aria-label="Configurar grupo">
-              <SettingsIcon className="size-5" />
-              <span className="hidden sm:inline">Configurar</span>
-            </button>
-            {/* TODO: abrir o formulário de nova despesa neste grupo. */}
-            <button type="button" className="primary-action">
+          group.archived ? null : (
+            <Link href={`/despesas/nova?grupo=${group.id}`} className="primary-action">
               <PlusIcon className="size-5" />
               Nova despesa
-            </button>
-          </>
+            </Link>
+          )
         }
       />
 
@@ -115,7 +115,53 @@ export default async function GrupoPage({
           className={tab === "despesas" ? "min-w-0" : "hidden min-w-0 lg:block"}
         >
           <SectionLabel id="despesas">DESPESAS</SectionLabel>
-          <ExpenseTimeline expenses={list} />
+          {timeline.length === 0 ? (
+            <div className="rounded-card border border-dashed border-kotta-border bg-kotta-surface p-8 text-center">
+              <p className="font-semibold text-kotta-text">Nenhuma despesa ainda</p>
+              <p className="mt-1 text-sm text-kotta-muted">
+                Lance a primeira despesa para começar a dividir.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-8">
+              {timeline.map(({ month, days }) => (
+                <div key={month}>
+                  <h3 className="font-display text-xl font-semibold text-kotta-secondary first-letter:uppercase">
+                    {formatMonthYear(`${month}-01`)}
+                  </h3>
+                  <div className="mt-4 flex flex-col gap-5">
+                    {days.map(({ day, items }) => (
+                      <div key={day}>
+                        <p className="mb-2 text-[13px] text-kotta-muted first-letter:uppercase">
+                          {formatLongDay(day)}
+                        </p>
+                        <ul className="divide-y divide-kotta-border overflow-hidden rounded-card border border-kotta-border bg-kotta-surface">
+                          {items.map((expense) => {
+                            const cat = category(expense.category);
+                            return (
+                              <li key={expense.id}>
+                                <ExpenseRow
+                                  description={expense.description}
+                                  amountCents={expense.amountCents}
+                                  category={cat}
+                                  meta={`${displayName(names, expense.paidByUserId, me.id)} pagou · ${cat.label}`}
+                                />
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {expensePage.hasMore ? (
+                <p className="text-center text-sm text-kotta-muted">
+                  Mostrando as {expensePage.items.length} despesas mais recentes.
+                </p>
+              ) : null}
+            </div>
+          )}
         </section>
 
         <aside
@@ -127,9 +173,7 @@ export default async function GrupoPage({
           <section
             aria-labelledby="seu-saldo"
             className={`rounded-card p-6 ${
-              myNet > 0
-                ? "bg-kotta-primary text-white"
-                : "border border-kotta-border bg-kotta-surface"
+              myNet > 0 ? "bg-kotta-primary text-white" : "border border-kotta-border bg-kotta-surface"
             }`}
           >
             <h2
@@ -158,45 +202,52 @@ export default async function GrupoPage({
 
           <section aria-labelledby="acertos">
             <SectionLabel id="acertos">PARA ACERTAR</SectionLabel>
-            {transfers.length === 0 ? (
+            {open.length === 0 ? (
               <p className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
                 Todos estão quites neste grupo.
               </p>
             ) : (
               <ul className="flex flex-col gap-3">
-                {transfers.map((transfer) => {
-                  const from = getMember(transfer.fromId);
-                  const to = getMember(transfer.toId);
-                  const involvesMe =
-                    transfer.fromId === CURRENT_USER_ID || transfer.toId === CURRENT_USER_ID;
+                {open.map((settlement) => {
+                  const involvesMe = settlement.from === me.id || settlement.to === me.id;
                   return (
                     <li
-                      key={`${transfer.fromId}-${transfer.toId}`}
+                      key={settlement.id}
                       className={`rounded-card border bg-kotta-surface p-4 ${
                         involvesMe ? "border-kotta-accent" : "border-kotta-border"
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <Avatar member={from} size="sm" />
+                        <Avatar
+                          person={{ id: settlement.from, name: names.get(settlement.from) ?? "?" }}
+                          size="sm"
+                        />
                         <ArrowRightIcon className="size-4 text-kotta-muted" />
-                        <Avatar member={to} size="sm" />
+                        <Avatar
+                          person={{ id: settlement.to, name: names.get(settlement.to) ?? "?" }}
+                          size="sm"
+                        />
                         <span className="ml-auto font-mono text-sm font-medium text-kotta-text">
-                          {formatBRL(transfer.amountCents)}
+                          {formatBRL(settlement.amountCents)}
                         </span>
                       </div>
                       <p className="mt-2 text-sm text-kotta-text">
-                        <span className="font-semibold">{displayName(from.id)}</span>{" "}
+                        <span className="font-semibold">{displayName(names, settlement.from, me.id)}</span>{" "}
                         paga{" "}
-                        <span className="font-semibold">{displayName(to.id, true)}</span>
+                        <span className="font-semibold">
+                          {displayName(names, settlement.to, me.id, { object: true })}
+                        </span>
                       </p>
                       {involvesMe ? (
-                        // TODO: registrar quitação na api-kottagroups.
-                        <button
-                          type="button"
-                          className="mt-3 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
-                        >
-                          Marcar como pago
-                        </button>
+                        <form action={markSettlementPaidAction} className="mt-3">
+                          <input type="hidden" name="settlementId" value={settlement.id} />
+                          <button
+                            type="submit"
+                            className="text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
+                          >
+                            Marcar como pago
+                          </button>
+                        </form>
                       ) : null}
                     </li>
                   );
@@ -205,29 +256,47 @@ export default async function GrupoPage({
             )}
           </section>
 
+          {done.length > 0 ? (
+            <section aria-labelledby="quitados">
+              <SectionLabel id="quitados">JÁ ACERTADOS</SectionLabel>
+              <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
+                {done.map((settlement) => (
+                  <li key={settlement.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <span className="min-w-0 flex-1 truncate text-kotta-text">
+                      {displayName(names, settlement.from, me.id)} pagou{" "}
+                      {displayName(names, settlement.to, me.id, { object: true })}
+                    </span>
+                    <span className="font-mono text-[13px] text-kotta-muted">
+                      {formatBRL(settlement.amountCents)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <section aria-labelledby="membros">
             <SectionLabel id="membros">MEMBROS</SectionLabel>
             <ul className="divide-y divide-kotta-border rounded-card border border-kotta-border bg-kotta-surface">
-              {memberList.map((member) => {
-                const value = net[member.id] ?? 0;
+              {group.members.map((member) => {
+                const value = netFor(group.balances, member.id);
                 return (
                   <li key={member.id} className="flex items-center gap-3 px-4 py-3">
-                    <Avatar member={member} />
+                    <Avatar person={member} />
                     <span className="min-w-0 flex-1 truncate text-sm font-medium text-kotta-text">
-                      {member.id === CURRENT_USER_ID ? `${member.name} (você)` : member.name}
+                      {member.id === me.id ? `${member.name} (você)` : member.name}
+                      {member.role === "owner" ? (
+                        <span className="ml-2 font-mono text-[11px] text-kotta-muted">dono</span>
+                      ) : member.role === "admin" ? (
+                        <span className="ml-2 font-mono text-[11px] text-kotta-muted">admin</span>
+                      ) : null}
                     </span>
                     <span
                       className={`font-mono text-[13px] font-medium ${
-                        value > 0
-                          ? "text-kotta-primary"
-                          : value < 0
-                            ? "text-kotta-danger"
-                            : "text-kotta-muted"
+                        value > 0 ? "text-kotta-primary" : value < 0 ? "text-kotta-danger" : "text-kotta-muted"
                       }`}
                     >
-                      {value === 0
-                        ? "quite"
-                        : `${value > 0 ? "+" : "−"} ${formatBRL(Math.abs(value))}`}
+                      {value === 0 ? "quite" : `${value > 0 ? "+" : "−"} ${formatBRL(Math.abs(value))}`}
                     </span>
                   </li>
                 );
@@ -240,22 +309,7 @@ export default async function GrupoPage({
   );
 }
 
-function displayName(memberId: string, object = false): string {
-  if (memberId === CURRENT_USER_ID) return object ? "você" : "Você";
-  return firstName(getMember(memberId));
-}
-
-function TabLink({
-  id,
-  tab,
-  current,
-  children,
-}: {
-  id: string;
-  tab: Tab;
-  current: Tab;
-  children: ReactNode;
-}) {
+function TabLink({ id, tab, current, children }: { id: string; tab: Tab; current: Tab; children: ReactNode }) {
   const active = tab === current;
   return (
     <Link
@@ -270,93 +324,5 @@ function TabLink({
     >
       {children}
     </Link>
-  );
-}
-
-function ExpenseTimeline({ expenses }: { expenses: Expense[] }) {
-  if (expenses.length === 0) {
-    return (
-      <div className="rounded-card border border-dashed border-kotta-border bg-kotta-surface p-8 text-center">
-        <p className="font-semibold text-kotta-text">Nenhuma despesa ainda</p>
-        <p className="mt-1 text-sm text-kotta-muted">
-          Adicione a primeira despesa para começar a dividir.
-        </p>
-      </div>
-    );
-  }
-
-  const months = new Map<string, Map<string, Expense[]>>();
-  for (const expense of expenses) {
-    const monthKey = expense.date.slice(0, 7);
-    const days = months.get(monthKey) ?? new Map<string, Expense[]>();
-    const day = days.get(expense.date) ?? [];
-    day.push(expense);
-    days.set(expense.date, day);
-    months.set(monthKey, days);
-  }
-
-  return (
-    <div className="flex flex-col gap-8">
-      {[...months.entries()].map(([monthKey, days]) => (
-        <div key={monthKey}>
-          <h3 className="font-display text-xl font-semibold text-kotta-secondary first-letter:uppercase">
-            {formatMonthYear(`${monthKey}-01`)}
-          </h3>
-          <div className="mt-4 flex flex-col gap-5">
-            {[...days.entries()].map(([day, dayExpenses]) => (
-              <div key={day}>
-                <p className="mb-2 text-[13px] text-kotta-muted first-letter:uppercase">
-                  {formatLongDay(day)}
-                </p>
-                <ul className="divide-y divide-kotta-border overflow-hidden rounded-card border border-kotta-border bg-kotta-surface">
-                  {dayExpenses.map((expense) => (
-                    <ExpenseRow key={expense.id} expense={expense} />
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ExpenseRow({ expense }: { expense: Expense }) {
-  const category = getCategory(expense.categoryId);
-  const iPaid = expense.paidById === CURRENT_USER_ID;
-  const share = myShareCents(expense);
-  const lent = iPaid ? expense.amountCents - share : 0;
-
-  let impact: { text: string; className: string };
-  if (iPaid) {
-    impact = { text: `você emprestou ${formatBRL(lent)}`, className: "text-kotta-primary" };
-  } else if (share > 0) {
-    impact = { text: `você deve ${formatBRL(share)}`, className: "text-kotta-danger" };
-  } else {
-    impact = { text: "não envolve você", className: "text-kotta-muted" };
-  }
-
-  return (
-    <li className="flex items-center gap-4 px-5 py-4 sm:px-6">
-      <span
-        aria-hidden="true"
-        className="flex size-11 shrink-0 items-center justify-center rounded-control bg-kotta-light-green text-xl"
-      >
-        {category.emoji}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-kotta-text">{expense.description}</p>
-        <p className="mt-0.5 truncate text-[13px] text-kotta-muted">
-          {displayName(expense.paidById)} pagou · {category.label}
-        </p>
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="font-mono text-sm font-medium text-kotta-text">
-          {formatBRL(expense.amountCents)}
-        </p>
-        <p className={`font-mono text-[11px] ${impact.className}`}>{impact.text}</p>
-      </div>
-    </li>
   );
 }

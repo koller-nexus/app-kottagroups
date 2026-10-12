@@ -2,8 +2,8 @@
 
 Versão web do Kotta Groups — divisão de gastos em grupo, igual ao app mobile.
 
-- **`/`**: a dashboard do app sem login, com dados de exemplo (os mesmos de `mobile-kottagroups/src/data/mock.ts`), Cadastrar e Entrar. Os selos da App Store e da Google Play aparecem como **Em breve**. Quem já está logado vai para `/painel`.
-- **`/painel`**: a mesma dashboard com os dados reais da API.
+- **`/`** sem login: a dashboard do app com dados de exemplo (os mesmos de `mobile-kottagroups/src/data/mock.ts`), Cadastrar e Entrar. Os selos da App Store e da Google Play aparecem como **Em breve**.
+- **`/`** com login: a mesma dashboard com os dados reais da API. `/painel` só redireciona para `/`.
 
 O sistema visual é o "Jardim" do app (ver [`DESIGN.md`](./DESIGN.md)).
 
@@ -18,7 +18,7 @@ Abra [http://localhost:3002](http://localhost:3002): a home é a dashboard do ap
 
 ## Área logada (integrada à api-kottagroups)
 
-Rotas: `/entrar`, `/cadastrar`, `/confirme-seu-email`, `/painel`, `/grupos`, `/grupos/novo`, `/grupos/[id]`, `/despesas/nova` e `/perfil`.
+Rotas: `/entrar`, `/cadastrar`, `/confirme-seu-email`, `/`, `/grupos`, `/grupos/novo`, `/grupos/[id]`, `/despesas/nova` e `/perfil`.
 
 - As páginas buscam os dados no servidor do Next (`lib/api/kotta.ts`), nunca no navegador.
 - O token JWT da API fica no cookie `httpOnly` `kotta_session` (24 h, igual ao token).

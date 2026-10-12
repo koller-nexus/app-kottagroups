@@ -8,7 +8,7 @@ export function NotificationsButton({ count }: { count: number }) {
       : `Pagamentos pendentes: ${count}`;
   return (
     <Link
-      href="/painel#acertos"
+      href="/notificacoes"
       aria-label={label}
       className="relative flex size-11 items-center justify-center rounded-full text-kotta-text hover:bg-kotta-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
     >

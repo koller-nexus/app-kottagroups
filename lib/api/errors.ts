@@ -39,9 +39,31 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
     case "VALIDATION_FAILED":
       return "Confira os campos e tente de novo.";
     case "GROUP_ARCHIVED":
-      return "Este grupo está arquivado e não aceita novas despesas.";
+      return "Este grupo está arquivado e não aceita alterações.";
     case "SPLIT_SUM_MISMATCH":
       return "A soma da divisão não bate com o valor da despesa.";
+    case "MEMBER_EXISTS":
+      return "Essa pessoa já está no grupo.";
+    case "OWNER_NOT_REMOVABLE":
+      return "O dono do grupo não pode ser removido.";
+    case "ALREADY_ADMINISTRATOR":
+      return "Essa pessoa já é administradora.";
+    case "CATEGORY_NAME_EXISTS":
+      return "Já existe uma categoria com esse nome.";
+    case "CATEGORY_DEFAULT_PROTECTED":
+      return "Categorias padrão não podem ser alteradas.";
+    case "CATEGORY_IN_USE":
+      return "Essa categoria está em uso. Escolha outra para receber as despesas.";
+    case "REPLACEMENT_CATEGORY_INVALID":
+      return "Escolha uma categoria substituta válida.";
+    case "CATEGORY_NOT_FOUND":
+      return "Categoria não encontrada.";
+    case "INVALID_RECEIPT_TYPE":
+      return "Envie uma imagem (JPG, PNG, WebP) ou PDF.";
+    case "RECEIPT_TOO_LARGE":
+      return "O arquivo passa de 10 MB.";
+    case "STORAGE_UNAVAILABLE":
+      return "O armazenamento de arquivos está fora do ar. Tente de novo mais tarde.";
     case "FORBIDDEN":
       return "Você não tem permissão para fazer isso.";
     case "NOT_FOUND":

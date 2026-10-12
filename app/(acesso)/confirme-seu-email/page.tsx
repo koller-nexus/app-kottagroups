@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function ConfirmeSeuEmailPage() {
   const me = await getMe();
-  if (me.emailConfirmed) redirect("/painel");
+  if (me.emailConfirmed) redirect("/");
 
   return (
     <>
@@ -23,7 +23,7 @@ export default async function ConfirmeSeuEmailPage() {
         Abra o link para liberar seus grupos e despesas.
       </p>
       <div className="mt-8 flex flex-col gap-3">
-        <Link href="/painel" className="primary-action w-full">
+        <Link href="/" className="primary-action w-full">
           Já confirmei
         </Link>
         <ResendConfirmation />

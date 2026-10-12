@@ -9,6 +9,8 @@ export interface DashboardSettlement {
   otherName: string;
   amountCents: number;
   paid: boolean;
+  /** Nome do grupo, quando a lista mistura grupos. */
+  groupName?: string;
   href: string;
 }
 
@@ -117,10 +119,11 @@ export function DashboardView({
                     <span className="truncate text-base font-semibold text-kotta-text">
                       {item.youReceive ? `${item.otherName} te paga` : `Você paga pra ${item.otherName}`}
                     </span>
-                    <span
-                      className={`text-[13px] font-semibold ${item.paid ? "text-kotta-primary" : "text-kotta-muted"}`}
-                    >
-                      {item.paid ? "Pago" : "Pendente"}
+                    <span className="text-[13px] text-kotta-muted">
+                      {item.groupName ? `${item.groupName} · ` : null}
+                      <span className={`font-semibold ${item.paid ? "text-kotta-primary" : ""}`}>
+                        {item.paid ? "Pago" : "Pendente"}
+                      </span>
                     </span>
                   </span>
                   <Price
@@ -140,13 +143,15 @@ export function DashboardView({
         <h2 id="grupos" className="mt-8 mb-3 text-xl font-bold text-kotta-text">
           Seus grupos{groups.length > 0 ? ` · ${groups.length}` : ""}
         </h2>
-        {groups.length === 0 && empty ? (
-          <div className="flex flex-col items-center gap-4 rounded-card bg-kotta-surface p-5 text-center">
-            <p className="text-[15px] leading-[22px] text-kotta-muted">{empty.text}</p>
-            <Link href={empty.actionHref} className="primary-action px-8">
-              {empty.actionLabel}
-            </Link>
-          </div>
+        {groups.length === 0 ? (
+          empty ? (
+            <div className="flex flex-col items-center gap-4 rounded-card bg-kotta-surface p-5 text-center">
+              <p className="text-[15px] leading-[22px] text-kotta-muted">{empty.text}</p>
+              <Link href={empty.actionHref} className="primary-action px-8">
+                {empty.actionLabel}
+              </Link>
+            </div>
+          ) : null
         ) : (
           <ul className="divide-y divide-kotta-border rounded-card bg-kotta-surface px-4">
             {groups.map((group) => (

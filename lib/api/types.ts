@@ -50,6 +50,10 @@ export interface ApiExpense {
   createdAt: string;
 }
 
+export interface ApiExpenseDetail extends ApiExpense {
+  shares: { userId: string; amountCents: number }[];
+}
+
 export interface ApiSettlement {
   id: string;
   from: string;
@@ -76,6 +80,63 @@ export interface ApiCategory {
   label: string;
   emoji: string;
   isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiShoppingProgress {
+  totalItems: number;
+  completedItems: number;
+  completedPercent: number;
+}
+
+export interface ApiShoppingListSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  progress: ApiShoppingProgress;
+}
+
+export interface ApiShoppingItem {
+  id: string;
+  name: string;
+  quantity: number;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiReceipt {
+  contentType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  url?: string;
+}
+
+export interface ApiShoppingListDetail extends ApiShoppingListSummary {
+  groupId: string;
+  updatedAt: string;
+  items: ApiShoppingItem[];
+  receipt?: ApiReceipt | null;
+}
+
+export type ApiInvoiceStatus = "queued" | "processing" | "done" | "failed" | "needs_review";
+
+export interface ApiInvoice {
+  id: string;
+  status: ApiInvoiceStatus;
+  originalName: string;
+  establishment: string;
+  issuedOn: string | null;
+  estimatedTotal: number;
+  itemsTotal: number;
+  items: unknown;
+  documentType: string;
+  needsReview: boolean;
+  riskLabel: string;
+  ocrConfidence: number;
+  errorMessage?: string;
+  processingMs: number;
   createdAt: string;
   updatedAt: string;
 }

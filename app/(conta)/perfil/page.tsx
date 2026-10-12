@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/app/avatar";
 import { PageHeader, SectionLabel } from "@/components/app/page-header";
@@ -52,6 +53,9 @@ export default async function PerfilPage() {
                 </li>
               ))}
             </ul>
+            <Link href="/perfil/categorias" className="secondary-action mt-4">
+              Gerenciar categorias
+            </Link>
           </section>
 
           <section aria-labelledby="conta">

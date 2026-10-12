@@ -24,6 +24,7 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   const headers = new Headers(rest.headers);
   headers.set("Accept", "application/json");
 
+  const method = (rest.method ?? "GET").toUpperCase();
   const token = auth ? await getSessionToken() : undefined;
   if (auth && !token) redirect("/entrar");
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -37,7 +38,8 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store",
     });
-  } catch {
+  } catch (error) {
+    console.error(`[api] ${method} ${path} -> network error`, error instanceof Error ? error.message : error);
     throw new ApiError(503, "NETWORK_ERROR", "Falha de rede ao falar com a API.");
   }
 
@@ -46,9 +48,14 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
     try {
       parsed = parseErrorBody(await response.json());
     } catch {
-      // Resposta sem JSON: fica o erro pelo status.
+      // Resposta sem JSON (ex.: página de bloqueio do proxy): fica o erro pelo status.
     }
-    const code = parsed?.code ?? (response.status === 401 ? "UNAUTHORIZED" : "UNKNOWN_ERROR");
+    const code = parsed?.code ?? fallbackCode(response);
+    // Vai para os logs do servidor (Vercel), sem token nem corpo da requisição.
+    console.error(
+      `[api] ${method} ${path} -> ${response.status} ${code}` +
+        ` (server=${response.headers.get("server") ?? "?"}, content-type=${response.headers.get("content-type") ?? "?"})`,
+    );
     if (auth && response.status === 401) {
       // O cookie só pode ser apagado num Route Handler.
       redirect("/sair?motivo=expirada");
@@ -62,6 +69,16 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   if (response.status === 204) return undefined as T;
   const payload = (await response.json()) as { data?: T };
   return (payload && typeof payload === "object" && "data" in payload ? payload.data : payload) as T;
+}
+
+/** Código para respostas de erro sem o envelope JSON da API. */
+function fallbackCode(response: Response): string {
+  if (response.status === 401) return "UNAUTHORIZED";
+  if (response.headers.get("cf-mitigated") || response.headers.get("server")?.toLowerCase() === "cloudflare") {
+    return "EDGE_BLOCKED";
+  }
+  if (response.status >= 500) return "SERVICE_UNAVAILABLE";
+  return `HTTP_${response.status}`;
 }
 
 export function withQuery(path: string, params: Record<string, string | number | boolean | undefined>): string {

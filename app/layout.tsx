@@ -11,7 +11,7 @@ const dmMono = DM_Mono({
 export const metadata: Metadata = {
   title: "Kotta Groups — dividir gastos com amigos",
   description:
-    "Versão web visual do Kotta Groups. O aplicativo para iPhone e Android chega em breve nas lojas.",
+    "Divida os gastos da viagem, da casa e do churrasco sem fazer conta de cabeça.",
   icons: {
     icon: [{ url: "/kotta-app-icon-green-nobg.png", type: "image/png" }],
     apple: [{ url: "/kotta-app-icon-green-nobg.png", type: "image/png" }],

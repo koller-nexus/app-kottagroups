@@ -1,8 +1,11 @@
 # Kotta Groups
 
-Versão web visual do Kotta Groups — divisão de gastos em grupo, com o mesmo layout da home pública do aplicativo. Sem login. Os selos da App Store e da Google Play aparecem como **Em breve**.
+Versão web do Kotta Groups — divisão de gastos em grupo, igual ao app mobile.
 
-O sistema visual está em [`DESIGN.md`](./DESIGN.md) (o mesmo do app Kotta): verde `#1a5c38`, fundo `#f7f9f8`, Playfair Display, DM Sans e DM Mono.
+- **`/`**: a dashboard do app sem login, com dados de exemplo (os mesmos de `mobile-kottagroups/src/data/mock.ts`), Cadastrar e Entrar. Os selos da App Store e da Google Play aparecem como **Em breve**. Quem já está logado vai para `/painel`.
+- **`/painel`**: a mesma dashboard com os dados reais da API.
+
+O sistema visual é o "Jardim" do app (ver [`DESIGN.md`](./DESIGN.md)).
 
 ## Como rodar
 
@@ -11,7 +14,7 @@ pnpm install
 pnpm dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000). A coluna central reproduz a home do app (marca, saldos, gastos do mês, quitações e grupos de demonstração).
+Abra [http://localhost:3002](http://localhost:3002): a home é a dashboard do app com dados de exemplo.
 
 ## Área logada (integrada à api-kottagroups)
 

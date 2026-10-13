@@ -1,0 +1,107 @@
+name: E2E
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kotta
+          POSTGRES_PASSWORD: kotta
+          POSTGRES_DB: kotta
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kotta -d kotta"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    env:
+      # Local-only values for throwaway CI containers, not secrets.
+      APP_ENV: dev
+      APP_PORT: "8085"
+      DATABASE_URL: postgres://kotta:kotta@localhost:5432/kotta?sslmode=disable
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-e2e-throwaway-secret-min-32-chars
+      AUTH_RATE_LIMIT_ATTEMPTS: "1000"
+      APP_CONFIRMATION_URL: http://localhost:3002
+      API_ORIGIN: http://localhost:8085
+
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Checkout API
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: koller-nexus/api-kottagroups
+          ref: develop
+          path: api
+          token: ${{ secrets.API_REPO_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      - name: Build API, migrate and start it with the dev seed
+        working-directory: api
+        run: |
+          go build -o "$RUNNER_TEMP/api" ./cmd/api
+          "$RUNNER_TEMP/api" -migrate
+          nohup "$RUNNER_TEMP/api" > "$GITHUB_WORKSPACE/api.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -fsS http://localhost:8085/api/healthz >/dev/null && exit 0
+            sleep 1
+          done
+          echo "API did not become healthy in 60s"; cat "$GITHUB_WORKSPACE/api.log"; exit 1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E (builds and starts the app)
+        run: pnpm test:e2e
+        env:
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+
+      - name: Upload report, traces and API log
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+            api.log
+          retention-days: 7

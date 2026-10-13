@@ -56,6 +56,12 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
       return "Essa categoria está em uso. Escolha outra para receber as despesas.";
     case "REPLACEMENT_CATEGORY_INVALID":
       return "Escolha uma categoria substituta válida.";
+    case "RECEIPT_ALREADY_IMPORTED":
+      return "Essa nota já foi usada neste grupo.";
+    case "NFCE_UNSUPPORTED":
+      return "Ainda não lemos notas desse estado. Envie uma foto da nota.";
+    case "NFCE_UNAVAILABLE":
+      return "A leitura pelo QR code está fora do ar. Envie uma foto da nota.";
     case "CATEGORY_NOT_FOUND":
       return "Categoria não encontrada.";
     case "INVALID_RECEIPT_TYPE":

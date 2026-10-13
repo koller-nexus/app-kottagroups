@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { ApiError } from "@/lib/api/errors";
 import { apiRequest, withQuery } from "@/lib/api/server";
 import type {
   ApiCategory,
@@ -9,10 +10,10 @@ import type {
   ApiGroupSummary,
   ApiInvoice,
   ApiNotification,
-  ApiReceipt,
   ApiSettlement,
   ApiShoppingListDetail,
   ApiShoppingListSummary,
+  ApiShoppingReceipt,
   ApiUser,
   CursorPage,
 } from "@/lib/api/types";
@@ -119,8 +120,18 @@ export const getShoppingList = cache((id: string) =>
 );
 
 export const getReceipt = cache((listId: string) =>
-  apiRequest<ApiReceipt>(`/shopping-lists/${encodeURIComponent(listId)}/receipt`),
+  apiRequest<ApiShoppingReceipt>(`/shopping-lists/${encodeURIComponent(listId)}/receipt`),
 );
+
+/** A API responde 404 quando a lista não tem nota. */
+export async function getReceiptOrNull(listId: string): Promise<ApiShoppingReceipt | null> {
+  try {
+    return await getReceipt(listId);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
 
 export const listInvoicesPage = cache((cursor?: string) =>
   apiRequest<CursorPage<ApiInvoice>>(withQuery("/invoices", { limit: 20, cursor })),

@@ -16,6 +16,8 @@
   --color-kotta-danger: #a4492a; /* terracotta: só "deve" e erros */
   --color-kotta-success-bg: #dceadf;
   --color-kotta-danger-bg: #f6e6de; /* sand rose */
+  --color-kotta-review-bg: #f3ecd8; /* sand: "Confere?" na lista de compras */
+  --color-kotta-review: #6b5317; /* texto e ícone sobre o sand */
   --color-kotta-neutral-bg: #dce3dc;
   --color-kotta-overlay: #f1f4ee;
   --color-kotta-on-field-muted: #cfe3d5;

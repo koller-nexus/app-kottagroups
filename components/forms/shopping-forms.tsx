@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type MouseEvent, type ReactNode } from "react";
+import { useActionState, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   addShoppingItemAction,
   createShoppingListAction,
@@ -13,9 +13,10 @@ import {
 import { Field, FormError } from "@/components/auth/field";
 import { compressPhoto } from "@/components/receipt/compress-photo";
 import { ItemMatchLine, MatchDecision } from "@/components/receipt/item-match";
+import { decodeQrFromFile } from "@/components/receipt/qr-decoder";
 import type { ApiReceiptItem, ApiShoppingItem } from "@/lib/api/types";
 import type { FormState } from "@/lib/form";
-import type { ItemMatchState } from "@/lib/receipt";
+import { receiptUploadPath, type ItemMatchState, type ReceiptUploadPath } from "@/lib/receipt";
 import { MAX_QUANTITY, MAX_SHOPPING_NAME_LENGTH } from "@/lib/shopping";
 
 const initialState: FormState = {};
@@ -266,23 +267,57 @@ export function ShoppingItemRow({
   );
 }
 
-/** Foto da nota: reduzida no aparelho antes de subir (a leitura é feita na API). */
-export function ReceiptUploadForm({ listId }: { listId: string }) {
+type QrSearch = "idle" | "searching" | ReceiptUploadPath;
+
+const QR_SEARCH_STATUS: Record<Exclude<QrSearch, "idle">, string> = {
+  searching: "Procurando QR code…",
+  qr: "QR code encontrado, enviando…",
+  "not-nfce": "Esse QR não parece de nota fiscal.",
+  ocr: "Não achei o QR code, vou ler a nota pela imagem.",
+};
+
+/**
+ * Imagem da nota (foto ou print): procura o QR no aparelho antes de subir.
+ * QR de NFC-e vai pelo mesmo caminho da câmera, sem upload; sem QR, a imagem reduzida vai pro OCR da API.
+ */
+export function ReceiptUploadForm({
+  listId,
+  onQrDetected,
+}: {
+  listId: string;
+  onQrDetected: (qrUrl: string) => void;
+}) {
   const [state, formAction, pending] = useActionState(async (prev: FormState, formData: FormData) => {
     const file = formData.get("file");
     if (file instanceof File && file.size > 0) formData.set("file", await compressPhoto(file));
     return uploadReceiptAction(prev, formData);
   }, initialState);
   const [hint, setHint] = useState<string | null>(null);
+  const [search, setSearch] = useState<QrSearch>("idle");
+  const formRef = useRef<HTMLFormElement>(null);
+  // Só vale o resultado do último arquivo escolhido.
+  const searchId = useRef(0);
   const error = hint ?? state.error;
+  const busy = pending || search === "searching" || search === "qr";
+
+  async function searchQr(file: File) {
+    const id = ++searchId.current;
+    setSearch("searching");
+    const text = await decodeQrFromFile(file);
+    if (id !== searchId.current) return;
+    const path = receiptUploadPath(text);
+    setSearch(path);
+    if (path === "qr" && text) onQrDetected(text);
+    if (path === "ocr") formRef.current?.requestSubmit();
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-3" noValidate>
+    <form ref={formRef} action={formAction} className="flex flex-col gap-3" noValidate>
       <input type="hidden" name="listId" value={listId} />
       <FormError message={error} />
       <div>
         <label htmlFor={`nota-${listId}`} className="block text-sm font-semibold text-kotta-text">
-          Enviar foto da nota
+          Enviar imagem da nota
         </label>
         <input
           id={`nota-${listId}`}
@@ -293,16 +328,28 @@ export function ReceiptUploadForm({ listId }: { listId: string }) {
           aria-describedby={`nota-${listId}-dica`}
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
-            setHint(file && !file.type.startsWith("image/") ? "Envie uma foto da nota." : null);
+            const isImage = Boolean(file?.type.startsWith("image/"));
+            setHint(file && !isImage ? "Envie uma foto da nota." : null);
+            if (file && isImage) {
+              void searchQr(file);
+            } else {
+              searchId.current += 1;
+              setSearch("idle");
+            }
           }}
           className={`mt-2 block w-full rounded-control border border-kotta-border bg-kotta-surface p-2 text-sm text-kotta-text file:mr-3 file:min-h-10 file:rounded-[9px] file:border-0 file:bg-kotta-light-green file:px-4 file:font-semibold file:text-kotta-primary ${focus}`}
         />
         <p id={`nota-${listId}-dica`} className="mt-1.5 text-[13px] text-kotta-muted">
-          Foto da nota inteira, bem iluminada.
+          Serve foto ou print. Se tiver QR code, lemos direto.
         </p>
       </div>
-      <button type="submit" className="secondary-action" disabled={pending || Boolean(hint)}>
-        {pending ? "Enviando foto…" : "Enviar foto"}
+      {search !== "idle" ? (
+        <p role="status" className="text-sm font-semibold text-kotta-text">
+          {QR_SEARCH_STATUS[search]}
+        </p>
+      ) : null}
+      <button type="submit" className="secondary-action" disabled={busy || Boolean(hint)}>
+        {pending ? "Enviando imagem…" : search === "not-nfce" ? "Enviar pro OCR mesmo assim" : "Enviar imagem"}
       </button>
     </form>
   );

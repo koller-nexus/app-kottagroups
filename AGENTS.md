@@ -35,6 +35,12 @@ Use these skills when the task matches. Project copies live under `.agents/skill
 - @.agents/skills/vercel-react-best-practices/SKILL.md
 - @.agents/skills/vercel-react-best-practices/AGENTS.md
 
+### Security
+
+Use when asked for a security audit, security review, or defensive pen test of this code.
+
+- @.agents/skills/security-audit/SKILL.md
+
 ### Spec Kit
 
 - @.agents/skills/speckit-specify/SKILL.md

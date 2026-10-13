@@ -53,6 +53,8 @@ Tokens em `app/globals.css` (classes `kotta-*` do Tailwind) e `lib/theme.ts`.
 | `kotta-border-strong` | `#BFCBC1` | bordas de input, barra do mês passado |
 | `kotta-danger` | `#A4492A` terracotta | **só** "deve", ações destrutivas e erros |
 | `kotta-danger-bg` | `#F6E6DE` sand rose | chip "deve", fundo de erro |
+| `kotta-review-bg` | `#F3ECD8` sand | linha "Confere?" da lista de compras; tonal, nunca amarelo saturado |
+| `kotta-review` | `#6B5317` | texto e ícone sobre o sand (6,2:1) |
 
 ## Tipografia
 

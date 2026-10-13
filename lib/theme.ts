@@ -34,6 +34,8 @@ export const colors = {
   successBg: leaf.field,
   danger: garden.terracotta,
   dangerBg: garden.sandRose,
+  reviewBg: '#F3ECD8',
+  review: '#6B5317',
 } as const;
 
 export const spacing = {

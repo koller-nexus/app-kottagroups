@@ -11,9 +11,12 @@ import {
   uploadReceiptAction,
 } from "@/app/actions/shopping";
 import { Field, FormError } from "@/components/auth/field";
-import type { ApiShoppingItem } from "@/lib/api/types";
+import { compressPhoto } from "@/components/receipt/compress-photo";
+import { ItemMatchLine, MatchDecision } from "@/components/receipt/item-match";
+import type { ApiReceiptItem, ApiShoppingItem } from "@/lib/api/types";
 import type { FormState } from "@/lib/form";
-import { MAX_QUANTITY, MAX_SHOPPING_NAME_LENGTH, RECEIPT_TYPES, validateReceipt } from "@/lib/shopping";
+import type { ItemMatchState } from "@/lib/receipt";
+import { MAX_QUANTITY, MAX_SHOPPING_NAME_LENGTH } from "@/lib/shopping";
 
 const initialState: FormState = {};
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary";
@@ -133,8 +136,25 @@ export function AddShoppingItemForm({ listId }: { listId: string }) {
   );
 }
 
-/** Linha do item: marcar como comprado, editar e remover. */
-export function ShoppingItemRow({ item, readOnly }: { item: ApiShoppingItem; readOnly: boolean }) {
+const ROW_TONE: Record<ItemMatchState, string> = {
+  found: "bg-kotta-light-green",
+  review: "bg-kotta-review-bg",
+  missing: "",
+  none: "",
+};
+
+/** Linha do item: marcar como comprado, editar e remover; com nota lida, mostra o que veio nela. */
+export function ShoppingItemRow({
+  item,
+  readOnly,
+  matchState = "none",
+  invoiceItem,
+}: {
+  item: ApiShoppingItem;
+  readOnly: boolean;
+  matchState?: ItemMatchState;
+  invoiceItem?: ApiReceiptItem | null;
+}) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(async (prev: FormState, formData: FormData) => {
     const result = await updateShoppingItemAction(prev, formData);
@@ -188,7 +208,7 @@ export function ShoppingItemRow({ item, readOnly }: { item: ApiShoppingItem; rea
   );
 
   return (
-    <div className="flex min-h-[68px] items-center gap-3 px-4 py-2">
+    <div className={`flex min-h-[68px] items-center gap-3 px-4 py-2 ${ROW_TONE[matchState]}`}>
       {readOnly ? (
         <span className="flex size-11 items-center justify-center">{box}</span>
       ) : (
@@ -215,6 +235,10 @@ export function ShoppingItemRow({ item, readOnly }: { item: ApiShoppingItem; rea
           {item.name}
         </p>
         <p className="text-[13px] text-kotta-muted">Quantidade: {item.quantity}</p>
+        <ItemMatchLine state={matchState} invoiceItem={invoiceItem} />
+        {matchState === "review" && item.match && !readOnly ? (
+          <MatchDecision matchId={item.match.id} itemName={item.name} />
+        ) : null}
       </div>
       {readOnly ? null : (
         <div className="flex shrink-0 items-center">
@@ -242,8 +266,13 @@ export function ShoppingItemRow({ item, readOnly }: { item: ApiShoppingItem; rea
   );
 }
 
-export function ReceiptUploadForm({ listId, replacing }: { listId: string; replacing: boolean }) {
-  const [state, formAction, pending] = useActionState(uploadReceiptAction, initialState);
+/** Foto da nota: reduzida no aparelho antes de subir (a leitura é feita na API). */
+export function ReceiptUploadForm({ listId }: { listId: string }) {
+  const [state, formAction, pending] = useActionState(async (prev: FormState, formData: FormData) => {
+    const file = formData.get("file");
+    if (file instanceof File && file.size > 0) formData.set("file", await compressPhoto(file));
+    return uploadReceiptAction(prev, formData);
+  }, initialState);
   const [hint, setHint] = useState<string | null>(null);
   const error = hint ?? state.error;
 
@@ -253,27 +282,27 @@ export function ReceiptUploadForm({ listId, replacing }: { listId: string; repla
       <FormError message={error} />
       <div>
         <label htmlFor={`nota-${listId}`} className="block text-sm font-semibold text-kotta-text">
-          {replacing ? "Trocar nota fiscal" : "Adicionar nota fiscal"}
+          Enviar foto da nota
         </label>
         <input
           id={`nota-${listId}`}
           name="file"
           type="file"
-          accept={RECEIPT_TYPES.join(",")}
+          accept="image/*"
           required
           aria-describedby={`nota-${listId}-dica`}
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
-            setHint(file ? validateReceipt(file) : null);
+            setHint(file && !file.type.startsWith("image/") ? "Envie uma foto da nota." : null);
           }}
           className={`mt-2 block w-full rounded-control border border-kotta-border bg-kotta-surface p-2 text-sm text-kotta-text file:mr-3 file:min-h-10 file:rounded-[9px] file:border-0 file:bg-kotta-light-green file:px-4 file:font-semibold file:text-kotta-primary ${focus}`}
         />
         <p id={`nota-${listId}-dica`} className="mt-1.5 text-[13px] text-kotta-muted">
-          Imagem (JPG, PNG, WebP) ou PDF de até 10 MB.
+          Foto da nota inteira, bem iluminada.
         </p>
       </div>
       <button type="submit" className="secondary-action" disabled={pending || Boolean(hint)}>
-        {pending ? "Enviando…" : "Enviar nota fiscal"}
+        {pending ? "Enviando foto…" : "Enviar foto"}
       </button>
     </form>
   );

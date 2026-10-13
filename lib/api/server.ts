@@ -86,7 +86,9 @@ async function currentPath(): Promise<string | null> {
 /** Código para respostas de erro sem o envelope JSON da API. */
 function fallbackCode(response: Response): string {
   if (response.status === 401) return "UNAUTHORIZED";
-  if (response.headers.get("cf-mitigated") || response.headers.get("server")?.toLowerCase() === "cloudflare") {
+  // Toda resposta via Cloudflare traz `server: cloudflare`; só desafio (cf-mitigated) ou 403 do WAF é bloqueio.
+  const viaCloudflare = response.headers.get("server")?.toLowerCase() === "cloudflare";
+  if (response.headers.get("cf-mitigated") || (viaCloudflare && response.status === 403)) {
     return "EDGE_BLOCKED";
   }
   if (response.status >= 500) return "SERVICE_UNAVAILABLE";

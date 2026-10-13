@@ -46,7 +46,7 @@ export function ReceiptCapture({ listId, failedMessage }: { listId: string; fail
       <FormError message={state.error} />
       {noCamera ? (
         <p role="status" className="text-sm text-kotta-text">
-          Não conseguimos usar a câmera. Digite a chave ou envie uma foto.
+          Não conseguimos usar a câmera. Digite a chave ou envie uma imagem da nota.
         </p>
       ) : null}
       {pending ? (
@@ -62,7 +62,7 @@ export function ReceiptCapture({ listId, failedMessage }: { listId: string; fail
         <QrScanner onDetected={submitQr} onUnavailable={cameraUnavailable} onClose={() => setScanning(false)} />
       ) : null}
 
-      <ReceiptUploadForm listId={listId} />
+      <ReceiptUploadForm listId={listId} onQrDetected={submitQr} />
 
       <details open={keyOpen} onToggle={(event) => setKeyOpen(event.currentTarget.open)} className="group">
         <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary">

@@ -16,6 +16,8 @@ export const PHOTO_JPEG_QUALITY = 0.8;
 export const RECEIPT_POLL_FIRST_MS = 2000;
 export const RECEIPT_POLL_MAX_MS = 5000;
 export const RECEIPT_POLL_TIMEOUT_MS = 120_000;
+/** Teto da busca de QR na imagem enviada; estourou, a imagem segue pro OCR. */
+export const QR_SEARCH_DEADLINE_MS = 1500;
 const POLL_GROWTH = 1.25;
 
 export type ItemMatchState = "found" | "review" | "missing" | "none";
@@ -68,6 +70,14 @@ export function accessKeyFromQrUrl(text: string): string | null {
   const p = url.searchParams.get("p");
   if (!p) return null;
   return normalizeAccessKey(p.split("|")[0]);
+}
+
+/** Caminho da imagem enviada: QR de NFC-e evita o OCR; outro QR pede confirmação. */
+export type ReceiptUploadPath = "qr" | "not-nfce" | "ocr";
+
+export function receiptUploadPath(qrText: string | null): ReceiptUploadPath {
+  if (qrText === null) return "ocr";
+  return accessKeyFromQrUrl(qrText) ? "qr" : "not-nfce";
 }
 
 /** Tamanho que cabe em `max` no lado maior, sem aumentar a imagem. */

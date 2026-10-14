@@ -1,47 +1,97 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { deleteInvoiceAction } from "@/app/actions/invoices";
+import { FormError } from "@/components/auth/field";
 import { AutoRefresh } from "@/components/app/auto-refresh";
+import { ConfirmDelete } from "@/components/app/confirm-delete";
+import { InvoiceExpenseSection } from "@/components/app/invoice-expense-section";
 import { InvoiceStatus } from "@/components/app/invoice-status";
 import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
-import { ApiError } from "@/lib/api/errors";
-import { getInvoice } from "@/lib/api/kotta";
-import type { ApiInvoice } from "@/lib/api/types";
+import { ApiError, friendlyMessage } from "@/lib/api/errors";
+import { getGroup, getInvoice, getMe, listExpensesPage } from "@/lib/api/kotta";
 import { formatLongDay } from "@/lib/dates";
 import {
   invoiceErrorMessage,
   invoiceRiskLabel,
   isInvoicePending,
+  isInvoiceRead,
   parseInvoiceItems,
   reaisToCents,
 } from "@/lib/invoices";
+import { canDeleteInvoice } from "@/lib/permissions";
+import { displayName, peopleById } from "@/lib/people";
 
 export const metadata: Metadata = {
   title: "Nota — Kotta Groups",
 };
 
-export default async function NotaPage({ params }: PageProps<"/notas/[id]">) {
-  const { id } = await params;
-  let invoice: ApiInvoice;
-  try {
-    invoice = await getInvoice(id);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) notFound();
-    throw error;
-  }
+export default async function GrupoNotaPage({ params, searchParams }: PageProps<"/grupos/[id]/notas/[notaId]">) {
+  const { id, notaId } = await params;
+  const { confirmar, erro } = await searchParams;
+
+  const loaded = await Promise.all([getMe(), getGroup(id), getInvoice(notaId), listExpensesPage(id)]).catch(
+    (error) => {
+      if (error instanceof ApiError && (error.status === 404 || error.status === 403)) notFound();
+      throw error;
+    },
+  );
+  const [me, group, invoice, expenses] = loaded;
+  // A URL pode misturar o grupo de uma nota com outro grupo do usuário.
+  if (invoice.groupId !== group.id) notFound();
 
   const pending = isInvoicePending(invoice.status);
-  const ready = invoice.status === "done" || invoice.status === "needs_review";
+  const ready = isInvoiceRead(invoice.status);
   const items = ready ? parseInvoiceItems(invoice.items) : [];
+  const role = group.members.find((member) => member.id === me.id)?.role;
+  const detailHref = `/grupos/${group.id}/notas/${invoice.id}`;
+  const deletable =
+    !group.archived && !pending && !invoice.shoppingListId && canDeleteInvoice(me.id, invoice.uploadedByUserId, role);
 
   return (
     <Page
       width="reading"
-      back={{ href: "/notas", label: "Notas" }}
+      back={{ href: `/grupos/${group.id}/notas`, label: "Notas" }}
       title={invoice.establishment || "Nota fiscal"}
-      description={invoice.originalName}
-      actions={<InvoiceStatus status={invoice.status} />}
+      description={
+        invoice.shoppingListId ? (
+          <Link href={`/grupos/${group.id}/listas/${invoice.shoppingListId}`} className="hover:underline">
+            Comprovante da lista de compras
+          </Link>
+        ) : (
+          `${invoice.originalName}, enviada por ${displayName(peopleById([group]), invoice.uploadedByUserId, me.id, { object: true })}`
+        )
+      }
+      actions={
+        <>
+          <InvoiceStatus status={invoice.status} />
+          {deletable ? (
+            <Link href={`${detailHref}?confirmar=excluir`} replace className="secondary-action text-kotta-danger!">
+              Excluir
+            </Link>
+          ) : null}
+        </>
+      }
     >
+      {typeof erro === "string" && erro ? (
+        <div>
+          <FormError message={friendlyMessage(erro)} />
+        </div>
+      ) : null}
+
+      {deletable && confirmar === "excluir" ? (
+        <ConfirmDelete
+          title="Excluir esta nota?"
+          action={deleteInvoiceAction}
+          fields={{ invoiceId: invoice.id, groupId: group.id, previousExpenseId: invoice.expenseId ?? "" }}
+          confirmLabel="Excluir nota"
+          cancelHref={detailHref}
+        >
+          A foto e a leitura somem do grupo, e a despesa vinculada fica sem nota. Não dá para desfazer.
+        </ConfirmDelete>
+      ) : null}
+
       {pending ? <AutoRefresh /> : null}
       {/* Vazio quando a nota está pronta; escondido para não somar espaço na pilha. */}
       <div aria-live="polite" className="empty:hidden">
@@ -125,6 +175,13 @@ export default async function NotaPage({ params }: PageProps<"/notas/[id]">) {
           </section>
         </>
       ) : null}
+
+      <InvoiceExpenseSection
+        invoice={invoice}
+        groupId={group.id}
+        expenses={expenses.items}
+        archived={group.archived}
+      />
     </Page>
   );
 }

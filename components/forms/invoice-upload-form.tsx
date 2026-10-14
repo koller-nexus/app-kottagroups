@@ -8,11 +8,14 @@ import { INVOICE_ACCEPT } from "@/lib/invoices";
 
 const initialState: FormState = {};
 
-export function InvoiceUploadForm() {
+/** Envia a foto de uma nota para o grupo; com `expenseId`, ela já nasce ligada à despesa. */
+export function InvoiceUploadForm({ groupId, expenseId }: { groupId: string; expenseId?: string }) {
   const [state, formAction, pending] = useActionState(uploadInvoiceAction, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-5" noValidate>
+      <input type="hidden" name="groupId" value={groupId} />
+      {expenseId ? <input type="hidden" name="expenseId" value={expenseId} /> : null}
       <FormError message={state.error} />
       <div>
         <label htmlFor="invoice-file" className="block text-sm font-semibold text-kotta-text">

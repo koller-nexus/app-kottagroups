@@ -47,6 +47,7 @@ export interface ApiExpense {
   createdByUserId: string;
   splitType: "equal" | "custom";
   customSplit?: Record<string, number> | null;
+  invoiceId: string | null;
   createdAt: string;
 }
 
@@ -177,6 +178,10 @@ export type ApiInvoiceStatus = "queued" | "processing" | "done" | "failed" | "ne
 
 export interface ApiInvoice {
   id: string;
+  groupId: string | null;
+  uploadedByUserId: string;
+  expenseId: string | null;
+  shoppingListId: string | null;
   status: ApiInvoiceStatus;
   originalName: string;
   establishment: string;

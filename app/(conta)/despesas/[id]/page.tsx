@@ -5,6 +5,7 @@ import { deleteExpenseAction } from "@/app/actions/expenses";
 import { FormError } from "@/components/auth/field";
 import { Avatar } from "@/components/app/avatar";
 import { ConfirmDelete } from "@/components/app/confirm-delete";
+import { ExpenseInvoiceSection } from "@/components/app/expense-invoice-section";
 import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
@@ -135,6 +136,8 @@ export default async function DespesaPage({ params, searchParams }: PageProps<"/
           ))}
         </ul>
       </section>
+
+      <ExpenseInvoiceSection expense={expense} archived={group.archived} />
     </Page>
   );
 }

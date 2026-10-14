@@ -58,6 +58,8 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
       return "Escolha uma categoria substituta válida.";
     case "RECEIPT_ALREADY_IMPORTED":
       return "Essa nota já foi usada neste grupo.";
+    case "EXPENSE_HAS_INVOICE":
+      return "Esta despesa já tem uma nota.";
     case "NFCE_UNSUPPORTED":
       return "Ainda não lemos notas desse estado. Envie uma foto da nota.";
     case "NFCE_UNAVAILABLE":

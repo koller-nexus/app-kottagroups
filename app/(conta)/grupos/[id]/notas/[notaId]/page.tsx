@@ -6,6 +6,7 @@ import { FormError } from "@/components/auth/field";
 import { AutoRefresh } from "@/components/app/auto-refresh";
 import { ConfirmDelete } from "@/components/app/confirm-delete";
 import { InvoiceExpenseSection } from "@/components/app/invoice-expense-section";
+import { InvoiceFailedRecovery } from "@/components/app/invoice-failed-recovery";
 import { InvoiceStatus } from "@/components/app/invoice-status";
 import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
@@ -13,6 +14,7 @@ import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { getGroup, getInvoice, getMe, listExpensesPage } from "@/lib/api/kotta";
 import { formatLongDay } from "@/lib/dates";
 import {
+  canLinkInvoice,
   invoiceErrorMessage,
   invoiceRiskLabel,
   isInvoicePending,
@@ -176,12 +178,16 @@ export default async function GrupoNotaPage({ params, searchParams }: PageProps<
         </>
       ) : null}
 
-      <InvoiceExpenseSection
-        invoice={invoice}
-        groupId={group.id}
-        expenses={expenses.items}
-        archived={group.archived}
-      />
+      {invoice.status === "failed" && !group.archived ? <InvoiceFailedRecovery groupId={group.id} /> : null}
+
+      {canLinkInvoice(invoice) ? (
+        <InvoiceExpenseSection
+          invoice={invoice}
+          groupId={group.id}
+          expenses={expenses.items}
+          archived={group.archived}
+        />
+      ) : null}
     </Page>
   );
 }

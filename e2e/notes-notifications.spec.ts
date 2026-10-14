@@ -1,8 +1,19 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { MOCK_API_PORT } from "./mock-api-port";
 import { runId } from "./run-id";
 
+const MOCK_ORIGIN = `http://localhost:${MOCK_API_PORT}`;
+
 const RECEIPT = path.join(__dirname, "..", "tests", "fixtures", "receipts", "sem-qr.jpg");
+
+async function setInvoice(invoiceId: string, override: Record<string, unknown>) {
+  const response = await fetch(`${MOCK_ORIGIN}/__mock/invoice/${invoiceId}`, {
+    method: "PUT",
+    body: JSON.stringify(override),
+  });
+  expect(response.ok).toBe(true);
+}
 
 test("/notas antigo leva aos grupos e saiu do menu", async ({ page }) => {
   await page.goto("/notas");
@@ -49,6 +60,30 @@ test.describe("notas do grupo", () => {
 
     await page.goto(expensePath);
     await expect(page.getByRole("link", { name: "Ver a nota" })).toHaveAttribute("href", notePath);
+  });
+
+  test("nota que falhou: explica, oferece outra foto e esconde Despesa", async ({ page }) => {
+    const invoiceId = notePath.split("/").pop()!;
+    // Sem vínculo: a nota do teste anterior foi vinculada de novo, então a desvinculamos na simulação.
+    await setInvoice(invoiceId, { status: "failed", expenseId: null, errorMessage: "Receipt extraction failed." });
+    await page.goto(notePath);
+    await expect(page.getByRole("alert")).toContainText("Não conseguimos ler esta nota");
+    await expect(page.getByRole("heading", { name: "Esta nota não pode ser lida de novo. Envie outra foto." })).toBeVisible();
+    await expect(page.getByLabel("Foto da nota")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Despesa", level: 2 })).toHaveCount(0);
+  });
+
+  test("nota na fila ou processando não mostra Despesa; lida mostra", async ({ page }) => {
+    const invoiceId = notePath.split("/").pop()!;
+    for (const status of ["queued", "processing"]) {
+      await setInvoice(invoiceId, { status, expenseId: null });
+      await page.goto(notePath);
+      await expect(page.getByRole("heading", { name: "Despesa", level: 2 })).toHaveCount(0);
+    }
+    await setInvoice(invoiceId, { status: "done", expenseId: null });
+    await page.goto(notePath);
+    await expect(page.getByRole("heading", { name: "Despesa", level: 2 })).toBeVisible();
+    await setInvoice(invoiceId, {});
   });
 
   test("a nota aparece nas notas do grupo", async ({ page }) => {

@@ -72,6 +72,11 @@ export function isInvoiceRead(status: string): boolean {
   return status === "done" || status === "needs_review";
 }
 
+/** Vincular a uma despesa só faz sentido com a nota lida; nota já vinculada segue visível para desvincular. */
+export function canLinkInvoice(invoice: Pick<ApiInvoice, "status" | "expenseId">): boolean {
+  return isInvoiceRead(invoice.status) || invoice.expenseId !== null;
+}
+
 /** Total da nota menos o valor da despesa, em centavos; null quando a nota não foi lida. */
 export function invoiceDifferenceCents(
   invoice: Pick<ApiInvoice, "status" | "estimatedTotal">,

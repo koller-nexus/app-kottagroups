@@ -19,6 +19,10 @@ interface Scenario {
 }
 
 const scenarios = new Map<string, Scenario>();
+/** Campos que sobrescrevem a nota do grupo devolvida pela API real (ex.: status). */
+const invoiceOverrides = new Map<string, Record<string, unknown>>();
+const INVOICE_PATH = /^\/api\/v1\/invoices\/([^/]+)$/;
+const INVOICE_CONTROL_PATH = /^\/__mock\/invoice\/([^/]+)$/;
 const RECEIPT_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)\/receipt$/;
 const RETRY_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)\/receipt\/retry$/;
 const LIST_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)$/;
@@ -37,6 +41,12 @@ createServer(async (req, res) => {
   const body = Buffer.concat(chunks);
 
   if (url.pathname === "/__mock/health") return send(res, 200, { ok: true });
+
+  const invoiceControl = INVOICE_CONTROL_PATH.exec(url.pathname);
+  if (invoiceControl && method === "PUT") {
+    invoiceOverrides.set(invoiceControl[1], JSON.parse(body.toString()));
+    return send(res, 204, {});
+  }
 
   const control = CONTROL_PATH.exec(url.pathname);
   if (control && method === "PUT") {
@@ -76,6 +86,13 @@ createServer(async (req, res) => {
   const headers = Object.fromEntries(
     [...upstream.headers].filter(([k]) => !["content-encoding", "content-length", "transfer-encoding"].includes(k)),
   );
+
+  const overrideId = method === "GET" ? INVOICE_PATH.exec(url.pathname)?.[1] : undefined;
+  const invoiceOverride = overrideId ? invoiceOverrides.get(overrideId) : undefined;
+  if (invoiceOverride && upstream.ok) {
+    const payload = JSON.parse(text) as { data: Record<string, unknown> };
+    return send(res, upstream.status, { data: { ...payload.data, ...invoiceOverride } });
+  }
 
   const listScenario = listId && method === "GET" ? scenarios.get(listId) : undefined;
   if (listScenario && upstream.ok) {

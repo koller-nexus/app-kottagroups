@@ -24,6 +24,7 @@ export function InvoiceExpenseSection({ invoice, groupId, expenses, archived }: 
     id: expense.id,
     label: `${expense.description} (${formatBRL(expense.amountCents)}, ${formatShortDate(localDay(expense.createdAt))})`,
   }));
+  const noExpenseToLink = !invoice.expenseId && !archived && options.length === 0;
   const fields = {
     invoiceId: invoice.id,
     groupId,
@@ -49,6 +50,8 @@ export function InvoiceExpenseSection({ invoice, groupId, expenses, archived }: 
             ) : null}
             .
           </p>
+        ) : noExpenseToLink ? (
+          <p className="text-sm text-kotta-muted">Registre uma despesa neste grupo para vincular esta nota.</p>
         ) : (
           <p className="text-sm text-kotta-muted">Esta nota ainda não comprova nenhuma despesa.</p>
         )}
@@ -71,7 +74,7 @@ export function InvoiceExpenseSection({ invoice, groupId, expenses, archived }: 
                 selectedId={invoice.expenseId}
                 submitLabel={invoice.expenseId ? "Trocar despesa" : "Vincular"}
               />
-            ) : (
+            ) : noExpenseToLink ? null : (
               <p className="text-sm text-kotta-muted">Não há despesas sem nota neste grupo.</p>
             )}
             {invoice.expenseId ? <InvoiceUnlinkButton fields={fields} /> : null}

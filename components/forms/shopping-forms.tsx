@@ -306,6 +306,8 @@ export function ReceiptUploadForm({
   const busy = pending || search === "searching" || search === "qr";
   const progress = pending ? (uploading ? "Enviando a nota…" : "Preparando a foto…") : null;
   const message = progress ?? (search === "idle" ? null : QR_SEARCH_STATUS[search]);
+  // Durante o envio, o resultado da busca de QR continua visível abaixo do progresso.
+  const searchNote = progress && (search === "ocr" || search === "not-nfce") ? QR_SEARCH_STATUS[search] : null;
 
   async function searchQr(file: File) {
     const id = ++searchId.current;
@@ -353,6 +355,7 @@ export function ReceiptUploadForm({
       {message ? (
         <p role="status" className="text-sm font-semibold text-kotta-text">
           {busy ? <Spinner label={message} /> : message}
+          {searchNote ? <span className="mt-0.5 block font-normal text-kotta-muted">{searchNote}</span> : null}
         </p>
       ) : null}
       <button type="submit" className="secondary-action" disabled={busy || Boolean(hint)}>

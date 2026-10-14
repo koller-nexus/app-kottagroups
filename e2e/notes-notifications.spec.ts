@@ -48,6 +48,8 @@ test.describe("notas do grupo", () => {
   });
 
   test("desvincular e vincular de novo pela nota", async ({ page }) => {
+    // Sem OCR no CI a nota nunca fica "lida", e a seção Despesa só aparece para nota lida.
+    await setInvoice(notePath.split("/").pop()!, { status: "done" });
     await page.goto(notePath);
     await page.getByRole("button", { name: "Desvincular" }).click();
     await expect(page.getByText("Esta nota ainda não comprova nenhuma despesa.")).toBeVisible();

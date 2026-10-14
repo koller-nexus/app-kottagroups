@@ -8,6 +8,7 @@ import { ConfirmDelete } from "@/components/app/confirm-delete";
 import { InvoiceExpenseSection } from "@/components/app/invoice-expense-section";
 import { InvoiceFailedRecovery } from "@/components/app/invoice-failed-recovery";
 import { InvoiceStatus } from "@/components/app/invoice-status";
+import { Spinner } from "@/components/app/spinner";
 import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
@@ -23,6 +24,7 @@ import {
   reaisToCents,
 } from "@/lib/invoices";
 import { canDeleteInvoice } from "@/lib/permissions";
+import { READING_LEAVE_HINT, readingMessage } from "@/lib/receipt";
 import { displayName, peopleById } from "@/lib/people";
 
 export const metadata: Metadata = {
@@ -98,9 +100,12 @@ export default async function GrupoNotaPage({ params, searchParams }: PageProps<
       {/* Vazio quando a nota está pronta; escondido para não somar espaço na pilha. */}
       <div aria-live="polite" className="empty:hidden">
         {pending ? (
-          <p className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
-            Estamos lendo a nota. Esta página se atualiza sozinha.
-          </p>
+          <div className="flex flex-col gap-1 rounded-card border border-kotta-border bg-kotta-surface p-6">
+            <p className="text-sm font-semibold text-kotta-text">
+              <Spinner label={readingMessage(invoice.status, false) ?? undefined} />
+            </p>
+            <p className="text-[13px] text-kotta-muted">{READING_LEAVE_HINT} Esta página se atualiza sozinha.</p>
+          </div>
         ) : null}
 
         {invoice.status === "failed" ? (

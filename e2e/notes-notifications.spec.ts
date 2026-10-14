@@ -69,7 +69,7 @@ test.describe("notas do grupo", () => {
     // Sem vínculo: a nota do teste anterior foi vinculada de novo, então a desvinculamos na simulação.
     await setInvoice(invoiceId, { status: "failed", expenseId: null, errorMessage: "Receipt extraction failed." });
     await page.goto(notePath);
-    await expect(page.getByRole("alert")).toContainText("Não conseguimos ler esta nota");
+    await expect(page.getByRole("alert").filter({ hasText: "Não conseguimos ler esta nota" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Esta nota não pode ser lida de novo. Envie outra foto." })).toBeVisible();
     await expect(page.getByLabel("Foto da nota")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Despesa", level: 2 })).toHaveCount(0);

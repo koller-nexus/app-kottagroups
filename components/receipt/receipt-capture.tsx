@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { startTransition, useActionState, useState } from "react";
+import { Spinner } from "@/components/app/spinner";
 import { submitReceiptCodeAction } from "@/app/actions/shopping";
 import { Field, FormError } from "@/components/auth/field";
 import { ReceiptUploadForm } from "@/components/forms/shopping-forms";
@@ -51,7 +52,7 @@ export function ReceiptCapture({ listId, failedMessage }: { listId: string; fail
       ) : null}
       {pending ? (
         <p role="status" className="text-sm font-semibold text-kotta-text">
-          Enviando nota…
+          <Spinner label="Enviando a nota…" />
         </p>
       ) : null}
 

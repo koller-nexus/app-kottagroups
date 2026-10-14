@@ -1,4 +1,5 @@
-import { invoiceStatusLabel } from "@/lib/invoices";
+import { Spinner } from "@/components/app/spinner";
+import { invoiceStatusLabel, isInvoicePending } from "@/lib/invoices";
 
 const tones: Record<string, string> = {
   done: "bg-kotta-light-green text-kotta-primary",
@@ -12,7 +13,7 @@ export function InvoiceStatus({ status }: { status: string }) {
         tones[status] ?? "bg-kotta-bg text-kotta-muted"
       }`}
     >
-      {invoiceStatusLabel(status)}
+      {isInvoicePending(status) ? <Spinner size="sm" label={invoiceStatusLabel(status)} /> : invoiceStatusLabel(status)}
     </span>
   );
 }

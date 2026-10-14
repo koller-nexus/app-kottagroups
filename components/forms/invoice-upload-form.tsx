@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { uploadInvoiceAction } from "@/app/actions/invoices";
+import { Spinner } from "@/components/app/spinner";
 import { FormError } from "@/components/auth/field";
 import type { FormState } from "@/lib/form";
 import { INVOICE_ACCEPT } from "@/lib/invoices";
@@ -34,10 +35,15 @@ export function InvoiceUploadForm({ groupId, expenseId }: { groupId: string; exp
           JPG, PNG, WebP ou TIFF de até 10 MB. A leitura leva alguns segundos.
         </p>
       </div>
-      <div>
+      <div className="flex flex-wrap items-center gap-4">
         <button type="submit" className="primary-action" disabled={pending}>
-          {pending ? "Enviando…" : "Enviar nota"}
+          Enviar nota
         </button>
+        {pending ? (
+          <p role="status" className="text-sm font-semibold text-kotta-text">
+            <Spinner label="Enviando a nota…" />
+          </p>
+        ) : null}
       </div>
     </form>
   );

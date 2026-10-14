@@ -2,15 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Spinner } from "@/components/app/spinner";
 import type { ApiInvoiceStatus } from "@/lib/api/types";
 import { isInvoicePending } from "@/lib/invoices";
-import { nextPollDelay, RECEIPT_POLL_TIMEOUT_MS } from "@/lib/receipt";
+import {
+  nextPollDelay,
+  READING_LEAVE_HINT,
+  readingJustFinished,
+  readingMessage,
+  RECEIPT_POLL_TIMEOUT_MS,
+} from "@/lib/receipt";
 
-const MESSAGES: Partial<Record<ApiInvoiceStatus, string>> = {
-  queued: "Lendo sua nota…",
-  processing: "Lendo sua nota…",
-  needs_review: "Confira alguns itens",
-};
+const READ_CONFIRMATION_MS = 4000;
 
 /**
  * Mostra o andamento da nota e, enquanto ela é lida, recarrega os dados do servidor
@@ -23,6 +26,17 @@ export function ReceiptStatus({ status }: { status: ApiInvoiceStatus }) {
   const [round, setRound] = useState(0);
   const [timedOutRound, setTimedOutRound] = useState<number | null>(null);
   const timedOut = pending && timedOutRound === round;
+  // "Nota lida" só aparece para quem viu a leitura em andamento terminar.
+  const [seenPending, setSeenPending] = useState(pending);
+  const [confirmationHidden, setConfirmationHidden] = useState(false);
+  if (pending && !seenPending) setSeenPending(true);
+  const justFinished = readingJustFinished(seenPending, status) && !confirmationHidden;
+
+  useEffect(() => {
+    if (!justFinished) return;
+    const timer = window.setTimeout(() => setConfirmationHidden(true), READ_CONFIRMATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [justFinished]);
 
   useEffect(() => {
     if (!pending) return;
@@ -44,17 +58,19 @@ export function ReceiptStatus({ status }: { status: ApiInvoiceStatus }) {
     return () => window.clearTimeout(timer);
   }, [pending, round, router]);
 
-  const message = timedOut ? "Ainda estamos lendo sua nota." : MESSAGES[status];
+  const message = justFinished
+    ? "Nota lida"
+    : (readingMessage(status, timedOut) ?? (status === "needs_review" ? "Confira alguns itens" : null));
   if (!message) return null;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-kotta-border bg-kotta-surface p-4">
-      <p role="status" className="flex items-center gap-2 text-sm font-semibold text-kotta-text">
-        {pending && !timedOut ? (
-          <span aria-hidden="true" className="size-2.5 rounded-pill bg-kotta-primary motion-safe:animate-pulse" />
-        ) : null}
-        {message}
-      </p>
+      <div role="status" className="flex flex-col gap-0.5">
+        <p className="text-sm font-semibold text-kotta-text">
+          {pending && !timedOut ? <Spinner label={message} /> : message}
+        </p>
+        {pending && !timedOut ? <p className="text-[13px] text-kotta-muted">{READING_LEAVE_HINT}</p> : null}
+      </div>
       {timedOut ? (
         <button
           type="button"

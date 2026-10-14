@@ -68,7 +68,7 @@ export default async function GrupoNotasPage({ params, searchParams }: PageProps
                       <span className="text-[13px] text-kotta-muted">
                         {invoice.issuedOn ? "Emitida em " : "Enviada em "}
                         {formatShortDate(day)}
-                        {invoice.shoppingListId
+                        {invoice.sentFromList
                           ? " · Comprovante da lista"
                           : ` · por ${displayName(names, invoice.uploadedByUserId, me.id)}`}
                         {invoice.expenseId ? " · Vinculada a uma despesa" : ""}

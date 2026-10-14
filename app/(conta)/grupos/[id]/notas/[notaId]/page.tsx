@@ -51,7 +51,7 @@ export default async function GrupoNotaPage({ params, searchParams }: PageProps<
   const role = group.members.find((member) => member.id === me.id)?.role;
   const detailHref = `/grupos/${group.id}/notas/${invoice.id}`;
   const deletable =
-    !group.archived && !pending && !invoice.shoppingListId && canDeleteInvoice(me.id, invoice.uploadedByUserId, role);
+    !group.archived && !pending && !invoice.sentFromList && canDeleteInvoice(me.id, invoice.uploadedByUserId, role);
 
   return (
     <Page
@@ -59,12 +59,22 @@ export default async function GrupoNotaPage({ params, searchParams }: PageProps<
       back={{ href: `/grupos/${group.id}/notas`, label: "Notas" }}
       title={invoice.establishment || "Nota fiscal"}
       description={
-        invoice.shoppingListId ? (
+        invoice.sentFromList && invoice.shoppingListId ? (
           <Link href={`/grupos/${group.id}/listas/${invoice.shoppingListId}`} className="hover:underline">
             Comprovante da lista de compras
           </Link>
         ) : (
-          `${invoice.originalName}, enviada por ${displayName(peopleById([group]), invoice.uploadedByUserId, me.id, { object: true })}`
+          <>
+            {`${invoice.originalName}, enviada por ${displayName(peopleById([group]), invoice.uploadedByUserId, me.id, { object: true })}`}
+            {invoice.shoppingListId ? (
+              <>
+                {" · "}
+                <Link href={`/grupos/${group.id}/listas/${invoice.shoppingListId}`} className="hover:underline">
+                  Ver lista de compras
+                </Link>
+              </>
+            ) : null}
+          </>
         )
       }
       actions={

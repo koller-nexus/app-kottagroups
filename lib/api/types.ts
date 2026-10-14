@@ -151,7 +151,15 @@ export interface ApiReceiptMatch {
 }
 
 /** De onde veio o resultado da leitura. */
-export type ApiReceiptResolutionPath = "qr_image" | "printed_key" | "qr_submitted" | "text";
+/** Valores de invoices.resolution_path na API; "" quando a leitura ainda não terminou. */
+export type ApiReceiptResolutionPath =
+  | ""
+  | "submitted_qr"
+  | "submitted_key"
+  | "photo_qr"
+  | "photo_key"
+  | "ocr"
+  | "ocr_escalated";
 
 export interface ApiReceiptRetry {
   allowed: boolean;
@@ -161,7 +169,8 @@ export interface ApiReceiptRetry {
 /** GET /shopping-lists/{id}/receipt. items, matches, establishment e total ficam vazios enquanto a nota está na fila ou sendo lida. */
 export interface ApiShoppingReceipt extends ApiReceiptSummary {
   resolutionPath: ApiReceiptResolutionPath | null;
-  retry: ApiReceiptRetry;
+  /** Ausente quando a API não oferece nova leitura: trate como não permitido. */
+  retry?: ApiReceiptRetry;
   establishment: { cnpj: string | null; name: string; uf: string | null } | null;
   issuedOn: string | null;
   totalCents: number;
@@ -192,6 +201,8 @@ export interface ApiInvoice {
   uploadedByUserId: string;
   expenseId: string | null;
   shoppingListId: string | null;
+  /** A lista enviou esta nota como comprovante: troca-se pela lista, não se exclui em Notas. */
+  sentFromList: boolean;
   status: ApiInvoiceStatus;
   originalName: string;
   establishment: string;

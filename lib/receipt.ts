@@ -6,6 +6,7 @@ import type {
   ApiReceiptMatch,
   ApiReceiptResolutionPath,
   ApiReceiptRetry,
+  ApiShoppingReceipt,
   ApiShoppingItem,
 } from "@/lib/api/types";
 import { formatBRL } from "./money.ts";
@@ -97,6 +98,22 @@ export function isReceiptProcessed(status: ApiInvoiceStatus | null | undefined):
   return status === "done" || status === "needs_review";
 }
 
+export const MATCHING_MESSAGE = "Marcando os itens da lista…";
+
+/**
+ * Nota lida, com linhas, mas sem nenhuma correspondência ainda: o backend cruza a nota com a
+ * lista depois de `done` e só então marca os itens como comprados.
+ */
+// ponytail: a API não diz quando o cruzamento acaba; nota sem nenhum item da lista espera até o
+// limite do polling. Upgrade: campo de "cruzamento em andamento" no GET /shopping-lists/{id}/receipt.
+export function awaitingMatches(
+  receipt: Pick<ApiShoppingReceipt, "status" | "items" | "matches"> | null,
+  items: Pick<ApiShoppingItem, "completed">[],
+): boolean {
+  if (!receipt || !isReceiptProcessed(receipt.status)) return false;
+  return receipt.items.length > 0 && receipt.matches.length === 0 && items.some((item) => !item.completed);
+}
+
 export function itemMatchState(item: Pick<ApiShoppingItem, "match">, processed: boolean): ItemMatchState {
   if (item.match?.status === "needs_review") return "review";
   if (item.match) return "found";
@@ -138,11 +155,15 @@ export function extractionMethodLabel(method: ApiExtractionMethod | null): strin
   return null;
 }
 
-const RESOLUTION_PATH_LABEL: Record<ApiReceiptResolutionPath, string> = {
-  qr_image: "Lido pelo QR code",
-  printed_key: "Lido pela chave de acesso",
-  qr_submitted: "QR code",
-  text: "Lido da foto — confira os itens",
+const READ_FROM_PHOTO = "Lido da foto — confira os itens";
+
+const RESOLUTION_PATH_LABEL: Partial<Record<ApiReceiptResolutionPath, string>> = {
+  photo_qr: "Lido pelo QR code",
+  photo_key: "Lido pela chave de acesso",
+  submitted_qr: "QR code",
+  submitted_key: "QR code",
+  ocr: READ_FROM_PHOTO,
+  ocr_escalated: READ_FROM_PHOTO,
 };
 
 /** Selo da origem do resultado; null sem origem ou com origem que esta versão não conhece. */
@@ -151,8 +172,8 @@ export function resolutionPathLabel(path: ApiReceiptResolutionPath | null): stri
 }
 
 /** "Tentar de novo" só em nota que falhou ou pede revisão, e só se a API permitir. */
-export function canRetryReceipt(receipt: { status: ApiInvoiceStatus | null; retry: ApiReceiptRetry }): boolean {
-  return receipt.retry.allowed && (receipt.status === "failed" || receipt.status === "needs_review");
+export function canRetryReceipt(receipt: { status: ApiInvoiceStatus | null; retry?: ApiReceiptRetry }): boolean {
+  return receipt.retry?.allowed === true && (receipt.status === "failed" || receipt.status === "needs_review");
 }
 
 export function retriesLeftLabel(remaining: number): string {

@@ -6,6 +6,7 @@ import { Spinner } from "@/components/app/spinner";
 import type { ApiInvoiceStatus } from "@/lib/api/types";
 import { isInvoicePending } from "@/lib/invoices";
 import {
+  MATCHING_MESSAGE,
   nextPollDelay,
   READING_LEAVE_HINT,
   readingJustFinished,
@@ -16,12 +17,13 @@ import {
 const READ_CONFIRMATION_MS = 4000;
 
 /**
- * Mostra o andamento da nota e, enquanto ela é lida, recarrega os dados do servidor
- * com intervalo crescente; quando a leitura termina, a lista volta já pintada.
+ * Mostra o andamento da nota e, enquanto ela é lida e cruzada com a lista, recarrega os dados
+ * do servidor com intervalo crescente; quando termina, a lista volta já pintada e com os checks.
  */
-export function ReceiptStatus({ status }: { status: ApiInvoiceStatus }) {
+export function ReceiptStatus({ status, awaitingMatches }: { status: ApiInvoiceStatus; awaitingMatches: boolean }) {
   const router = useRouter();
-  const pending = isInvoicePending(status);
+  const reading = isInvoicePending(status);
+  const pending = reading || awaitingMatches;
   // Cada "Verificar de novo" começa uma nova rodada de consultas.
   const [round, setRound] = useState(0);
   const [timedOutRound, setTimedOutRound] = useState<number | null>(null);
@@ -30,7 +32,7 @@ export function ReceiptStatus({ status }: { status: ApiInvoiceStatus }) {
   const [seenPending, setSeenPending] = useState(pending);
   const [confirmationHidden, setConfirmationHidden] = useState(false);
   if (pending && !seenPending) setSeenPending(true);
-  const justFinished = readingJustFinished(seenPending, status) && !confirmationHidden;
+  const justFinished = readingJustFinished(seenPending, status) && !awaitingMatches && !confirmationHidden;
 
   useEffect(() => {
     if (!justFinished) return;
@@ -58,9 +60,13 @@ export function ReceiptStatus({ status }: { status: ApiInvoiceStatus }) {
     return () => window.clearTimeout(timer);
   }, [pending, round, router]);
 
+  // Se o cruzamento passar do limite, some em silêncio: a nota já foi lida.
+  if (awaitingMatches && timedOut) return null;
   const message = justFinished
     ? "Nota lida"
-    : (readingMessage(status, timedOut) ?? (status === "needs_review" ? "Confira alguns itens" : null));
+    : awaitingMatches
+      ? MATCHING_MESSAGE
+      : (readingMessage(status, timedOut) ?? (status === "needs_review" ? "Confira alguns itens" : null));
   if (!message) return null;
 
   return (

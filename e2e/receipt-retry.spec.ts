@@ -62,7 +62,7 @@ test("nota que falhou: tentar de novo leva a fila, depois ao resultado com selo"
     receipts: [
       receipt("failed", retryAllowed(2)),
       receipt("queued"),
-      receipt("done", { resolutionPath: "qr_image" }),
+      receipt("done", { resolutionPath: "photo_qr" }),
     ],
   });
 

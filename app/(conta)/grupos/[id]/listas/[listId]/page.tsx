@@ -15,11 +15,11 @@ import { ReceiptStatus } from "@/components/receipt/receipt-status";
 import { ReceiptSummary } from "@/components/receipt/receipt-summary";
 import { getGroup, getReceiptOrNull, getShoppingList } from "@/lib/api/kotta";
 import { ApiError } from "@/lib/api/errors";
-import type { ApiReceiptSummary, ApiShoppingReceipt } from "@/lib/api/types";
+import type { ApiReceiptSummary, ApiShoppingItem, ApiShoppingReceipt } from "@/lib/api/types";
 import { formatShortDate } from "@/lib/dates";
 import { invoiceErrorMessage } from "@/lib/invoices";
 import { formatBRL } from "@/lib/money";
-import { canRetryReceipt, isReceiptProcessed, itemMatchState, matchSummary, matchSummaryLabel } from "@/lib/receipt";
+import { awaitingMatches, canRetryReceipt, isReceiptProcessed, itemMatchState, matchSummary, matchSummaryLabel } from "@/lib/receipt";
 import { formatFileSize, progressLabel } from "@/lib/shopping";
 
 const NOT_RETRYABLE_MESSAGE = "Essa nota não pode ser lida de novo.";
@@ -91,7 +91,7 @@ export default async function ListaPage({ params }: PageProps<"/grupos/[id]/list
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
         <div className="flex min-w-0 flex-col gap-8">
-          <ReceiptArea receipt={receipt} listId={list.id} readOnly={readOnly} />
+          <ReceiptArea receipt={receipt} items={list.items} listId={list.id} readOnly={readOnly} />
           <section aria-labelledby="itens" className="min-w-0">
             <SectionLabel id="itens">Itens</SectionLabel>
             {total === 0 ? (
@@ -152,10 +152,12 @@ export default async function ListaPage({ params }: PageProps<"/grupos/[id]/list
 /** Topo da lista: capturar a nota, acompanhar a leitura ou a nota antiga só como arquivo. */
 function ReceiptArea({
   receipt,
+  items,
   listId,
   readOnly,
 }: {
   receipt: ApiShoppingReceipt | null;
+  items: ApiShoppingItem[];
   listId: string;
   readOnly: boolean;
 }) {
@@ -179,10 +181,10 @@ function ReceiptArea({
   }
   if (readOnly) return null;
   const status = receipt?.status;
-  const retry = receipt && canRetryReceipt(receipt) ? <ReceiptRetry listId={listId} remaining={receipt.retry.remaining} /> : null;
+  const retry = receipt && canRetryReceipt(receipt) ? <ReceiptRetry listId={listId} remaining={receipt.retry?.remaining ?? 0} /> : null;
   if (!receipt || !status || status === "failed") {
     const reason = receipt ? invoiceErrorMessage(receipt.errorMessage ?? undefined) : undefined;
-    const failedMessage = receipt && !receipt.retry.allowed ? `${NOT_RETRYABLE_MESSAGE} ${reason}` : reason;
+    const failedMessage = receipt && !receipt.retry?.allowed ? `${NOT_RETRYABLE_MESSAGE} ${reason}` : reason;
     return (
       <>
         {retry}
@@ -192,7 +194,7 @@ function ReceiptArea({
   }
   return (
     <>
-      <ReceiptStatus status={status} />
+      <ReceiptStatus status={status} awaitingMatches={awaitingMatches(receipt, items)} />
       {retry}
     </>
   );

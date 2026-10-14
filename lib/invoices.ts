@@ -1,4 +1,4 @@
-import type { ApiInvoiceStatus } from "@/lib/api/types";
+import type { ApiExpense, ApiInvoice, ApiInvoiceStatus } from "@/lib/api/types";
 
 // Mesmos tipos e teto que a API aceita (o tipo real é conferido pelo conteúdo).
 export const INVOICE_ACCEPT = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
@@ -65,4 +65,31 @@ export function invoiceErrorMessage(message: string | undefined): string {
     return "A leitura demorou demais e foi interrompida. Envie a nota de novo.";
   }
   return "Não conseguimos ler esta nota. Tente uma foto mais nítida e bem iluminada.";
+}
+
+/** Nota lida (pronta ou a revisar): só então o total dela vale. */
+export function isInvoiceRead(status: string): boolean {
+  return status === "done" || status === "needs_review";
+}
+
+/** Total da nota menos o valor da despesa, em centavos; null quando a nota não foi lida. */
+export function invoiceDifferenceCents(
+  invoice: Pick<ApiInvoice, "status" | "estimatedTotal">,
+  expense: Pick<ApiExpense, "amountCents">,
+): number | null {
+  if (!isInvoiceRead(invoice.status)) return null;
+  return reaisToCents(invoice.estimatedTotal) - expense.amountCents;
+}
+
+/** Despesas que podem receber esta nota: sem nota ou já ligadas a ela. */
+export function linkableExpenses<T extends Pick<ApiExpense, "invoiceId">>(
+  expenses: T[],
+  invoice: Pick<ApiInvoice, "id">,
+): T[] {
+  return expenses.filter((expense) => expense.invoiceId === null || expense.invoiceId === invoice.id);
+}
+
+/** Notas ainda sem despesa (comprovantes de lista inclusos). */
+export function unlinkedInvoices<T extends Pick<ApiInvoice, "expenseId">>(invoices: T[]): T[] {
+  return invoices.filter((invoice) => invoice.expenseId === null);
 }

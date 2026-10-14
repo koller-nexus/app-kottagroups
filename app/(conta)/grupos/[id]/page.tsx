@@ -11,6 +11,7 @@ import { ConfirmDelete } from "@/components/app/confirm-delete";
 import { CopyTextButton } from "@/components/app/copy-text-button";
 import { ExpenseRow } from "@/components/app/expense-row";
 import { GardenField } from "@/components/app/garden-field";
+import { GroupInvoicesCard } from "@/components/app/group-invoices-card";
 import { GroupMenu } from "@/components/app/group-menu";
 import { ShoppingListsCard } from "@/components/app/shopping-lists-card";
 import { Price } from "@/components/app/price";
@@ -189,6 +190,10 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
 
           <div className="mb-8">
             <ShoppingListsCard groupId={group.id} archived={group.archived} />
+          </div>
+
+          <div className="mb-8">
+            <GroupInvoicesCard groupId={group.id} archived={group.archived} />
           </div>
 
           <SectionLabel id="despesas">Despesas</SectionLabel>

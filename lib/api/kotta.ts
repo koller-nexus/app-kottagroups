@@ -133,8 +133,10 @@ export async function getReceiptOrNull(listId: string): Promise<ApiShoppingRecei
   }
 }
 
-export const listInvoicesPage = cache((cursor?: string) =>
-  apiRequest<CursorPage<ApiInvoice>>(withQuery("/invoices", { limit: 20, cursor })),
+export const listGroupInvoicesPage = cache((groupId: string, cursor?: string, limit = 20) =>
+  apiRequest<CursorPage<ApiInvoice>>(
+    withQuery(`/groups/${encodeURIComponent(groupId)}/invoices`, { limit, cursor }),
+  ),
 );
 
 export const getInvoice = cache((id: string) =>

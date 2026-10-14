@@ -23,3 +23,8 @@ export function canEditExpense(meId: string, createdByUserId: string, role: ApiM
 export function canSettle(meId: string, settlement: { from: string; to: string }): boolean {
   return meId === settlement.from || meId === settlement.to;
 }
+
+/** Excluir nota do grupo: quem enviou, o dono ou um admin. */
+export function canDeleteInvoice(meId: string, uploadedByUserId: string, role: ApiMemberRole | undefined): boolean {
+  return meId === uploadedByUserId || role === "owner" || role === "admin";
+}

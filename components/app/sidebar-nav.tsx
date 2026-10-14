@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GroupsIcon, HomeIcon, ReceiptIcon, UserIcon } from "@/components/app/icons";
+import { GroupsIcon, HomeIcon, UserIcon } from "@/components/app/icons";
 import { isActive, navItems, type NavIcon } from "@/components/app/nav-items";
 
 const icons: Record<NavIcon, typeof HomeIcon> = {
   home: HomeIcon,
   groups: GroupsIcon,
-  receipt: ReceiptIcon,
   user: UserIcon,
 };
 

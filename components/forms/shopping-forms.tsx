@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   addShoppingItemAction,
   createShoppingListAction,
@@ -10,6 +10,7 @@ import {
   updateShoppingItemAction,
   uploadReceiptAction,
 } from "@/app/actions/shopping";
+import { Spinner } from "@/components/app/spinner";
 import { Field, FormError } from "@/components/auth/field";
 import { compressPhoto } from "@/components/receipt/compress-photo";
 import { ItemMatchLine, MatchDecision } from "@/components/receipt/item-match";
@@ -287,9 +288,13 @@ export function ReceiptUploadForm({
   listId: string;
   onQrDetected: (qrUrl: string) => void;
 }) {
+  // Distingue "Preparando a foto…" (compressão) de "Enviando a nota…" dentro do mesmo envio.
+  const [uploading, setUploading] = useState(false);
   const [state, formAction, pending] = useActionState(async (prev: FormState, formData: FormData) => {
+    setUploading(false);
     const file = formData.get("file");
     if (file instanceof File && file.size > 0) formData.set("file", await compressPhoto(file));
+    startTransition(() => setUploading(true));
     return uploadReceiptAction(prev, formData);
   }, initialState);
   const [hint, setHint] = useState<string | null>(null);
@@ -299,6 +304,8 @@ export function ReceiptUploadForm({
   const searchId = useRef(0);
   const error = hint ?? state.error;
   const busy = pending || search === "searching" || search === "qr";
+  const progress = pending ? (uploading ? "Enviando a nota…" : "Preparando a foto…") : null;
+  const message = progress ?? (search === "idle" ? null : QR_SEARCH_STATUS[search]);
 
   async function searchQr(file: File) {
     const id = ++searchId.current;
@@ -343,13 +350,13 @@ export function ReceiptUploadForm({
           Serve foto ou print. Se tiver QR code, lemos direto.
         </p>
       </div>
-      {search !== "idle" ? (
+      {message ? (
         <p role="status" className="text-sm font-semibold text-kotta-text">
-          {QR_SEARCH_STATUS[search]}
+          {busy ? <Spinner label={message} /> : message}
         </p>
       ) : null}
       <button type="submit" className="secondary-action" disabled={busy || Boolean(hint)}>
-        {pending ? "Enviando imagem…" : search === "not-nfce" ? "Enviar pro OCR mesmo assim" : "Enviar imagem"}
+        {pending ? "Enviando…" : search === "not-nfce" ? "Enviar pro OCR mesmo assim" : "Enviar imagem"}
       </button>
     </form>
   );

@@ -158,3 +158,17 @@ export function canRetryReceipt(receipt: { status: ApiInvoiceStatus | null; retr
 export function retriesLeftLabel(remaining: number): string {
   return remaining === 1 ? "1 tentativa restante" : `${remaining} tentativas restantes`;
 }
+
+export const READING_LEAVE_HINT = "Pode sair da tela; seguimos lendo.";
+
+/** Texto do aviso enquanto a nota está na fila ou sendo lida; `null` quando não há leitura em andamento. */
+export function readingMessage(status: ApiInvoiceStatus | null | undefined, timedOut: boolean): string | null {
+  if (status !== "queued" && status !== "processing") return null;
+  if (timedOut) return "Está demorando mais que o normal.";
+  return status === "queued" ? "Na fila para ser lida" : "Lendo sua nota…";
+}
+
+/** "Nota lida" só vale para quem viu a leitura em andamento terminar com sucesso. */
+export function readingJustFinished(seenPending: boolean, status: ApiInvoiceStatus | null | undefined): boolean {
+  return seenPending && status === "done";
+}

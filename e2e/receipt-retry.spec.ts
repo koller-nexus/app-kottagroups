@@ -69,11 +69,12 @@ test("nota que falhou: tentar de novo leva a fila, depois ao resultado com selo"
   await expect(page.getByText("2 tentativas restantes")).toBeVisible();
   await retryButton(page).click();
 
-  await expect(page.getByText("Lendo sua nota…")).toBeVisible();
+  await expect(page.getByText("Na fila para ser lida")).toBeVisible();
   await expect(retryButton(page)).toHaveCount(0);
   await expect(page.getByRole("heading", { name: ESTABLISHMENT })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: ESTABLISHMENT })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Nota lida")).toBeVisible();
   await expect(page.getByText("Lido pelo QR code")).toBeVisible();
   await expect(retryButton(page)).toHaveCount(0);
 });
@@ -118,7 +119,8 @@ test("na fila: só o status, itens marcados continuam e não há botão", async 
     completeItems: true,
   });
 
-  await expect(page.getByText("Lendo sua nota…")).toBeVisible();
+  await expect(page.getByText("Na fila para ser lida")).toBeVisible();
+  await expect(page.getByText("Pode sair da tela; seguimos lendo.")).toBeVisible();
   await expect(page.getByRole("checkbox", { name: `${item}, comprado` })).toBeChecked();
   await expect(page.getByRole("heading", { name: ESTABLISHMENT })).toHaveCount(0);
   await expect(retryButton(page)).toHaveCount(0);

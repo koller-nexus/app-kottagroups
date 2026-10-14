@@ -56,7 +56,7 @@ export function ReceiptCapture({ listId, failedMessage }: { listId: string; fail
       ) : null}
 
       <button type="button" className="primary-action" disabled={pending} onClick={() => setScanning(true)}>
-        {failedMessage ? "Tentar de novo" : "Escanear QR code"}
+        Escanear QR code
       </button>
       {scanning ? (
         <QrScanner onDetected={submitQr} onUnavailable={cameraUnavailable} onClose={() => setScanning(false)} />

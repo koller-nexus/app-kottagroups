@@ -10,6 +10,7 @@ import {
   ShoppingListNameForm,
 } from "@/components/forms/shopping-forms";
 import { ReceiptCapture } from "@/components/receipt/receipt-capture";
+import { ReceiptRetry } from "@/components/receipt/receipt-retry";
 import { ReceiptStatus } from "@/components/receipt/receipt-status";
 import { ReceiptSummary } from "@/components/receipt/receipt-summary";
 import { getGroup, getReceiptOrNull, getShoppingList } from "@/lib/api/kotta";
@@ -18,8 +19,10 @@ import type { ApiReceiptSummary, ApiShoppingReceipt } from "@/lib/api/types";
 import { formatShortDate } from "@/lib/dates";
 import { invoiceErrorMessage } from "@/lib/invoices";
 import { formatBRL } from "@/lib/money";
-import { isReceiptProcessed, itemMatchState, matchSummary, matchSummaryLabel } from "@/lib/receipt";
+import { canRetryReceipt, isReceiptProcessed, itemMatchState, matchSummary, matchSummaryLabel } from "@/lib/receipt";
 import { formatFileSize, progressLabel } from "@/lib/shopping";
+
+const NOT_RETRYABLE_MESSAGE = "Essa nota não pode ser lida de novo.";
 
 const linkClass =
   "inline-flex min-h-11 items-center text-sm font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary";
@@ -176,11 +179,23 @@ function ReceiptArea({
   }
   if (readOnly) return null;
   const status = receipt?.status;
+  const retry = receipt && canRetryReceipt(receipt) ? <ReceiptRetry listId={listId} remaining={receipt.retry.remaining} /> : null;
   if (!receipt || !status || status === "failed") {
-    const failedMessage = receipt ? invoiceErrorMessage(receipt.errorMessage ?? undefined) : undefined;
-    return <ReceiptCapture listId={listId} failedMessage={failedMessage} />;
+    const reason = receipt ? invoiceErrorMessage(receipt.errorMessage ?? undefined) : undefined;
+    const failedMessage = receipt && !receipt.retry.allowed ? `${NOT_RETRYABLE_MESSAGE} ${reason}` : reason;
+    return (
+      <>
+        {retry}
+        <ReceiptCapture listId={listId} failedMessage={failedMessage} />
+      </>
+    );
   }
-  return <ReceiptStatus status={status} />;
+  return (
+    <>
+      <ReceiptStatus status={status} />
+      {retry}
+    </>
+  );
 }
 
 function ReceiptPreview({ receipt }: { receipt: ApiReceiptSummary }) {

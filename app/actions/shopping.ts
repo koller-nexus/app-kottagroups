@@ -170,6 +170,19 @@ export async function submitReceiptCodeAction(_prev: FormState, formData: FormDa
   return { ok: true };
 }
 
+/** Pede nova leitura de uma nota que falhou; a página revalidada retoma o acompanhamento. */
+export async function retryReceiptAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const listId = text(formData, "listId");
+  if (!listId) return { error: "Lista não encontrada." };
+  try {
+    await apiRequest<ApiReceiptAccepted>(`/shopping-lists/${enc(listId)}/receipt/retry`, { method: "POST" });
+  } catch (error) {
+    return failure(error);
+  }
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export async function deleteReceiptAction(formData: FormData): Promise<void> {
   const listId = text(formData, "listId");
   if (!listId) return;

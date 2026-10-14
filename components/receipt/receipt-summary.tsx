@@ -3,7 +3,7 @@ import { Price } from "@/components/app/price";
 import { ConfirmSubmit } from "@/components/forms/shopping-forms";
 import type { ApiShoppingReceipt } from "@/lib/api/types";
 import { formatShortDate } from "@/lib/dates";
-import { extractionMethodLabel, extraInvoiceItems, invoiceLineLabel } from "@/lib/receipt";
+import { extractionMethodLabel, extraInvoiceItems, invoiceLineLabel, resolutionPathLabel } from "@/lib/receipt";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary";
 
@@ -18,7 +18,9 @@ export function ReceiptSummary({
   readOnly: boolean;
 }) {
   const extras = extraInvoiceItems(receipt);
-  const method = extractionMethodLabel(receipt.extractionMethod);
+  const origin = resolutionPathLabel(receipt.resolutionPath);
+  // O selo de origem é mais específico que o método; com ele, o método não repete a informação.
+  const method = origin ? null : extractionMethodLabel(receipt.extractionMethod);
   const details = [receipt.issuedOn ? formatShortDate(receipt.issuedOn) : null, method].filter(Boolean).join(" · ");
 
   return (
@@ -29,6 +31,11 @@ export function ReceiptSummary({
             {receipt.establishment?.name || "Estabelecimento não identificado"}
           </h2>
           {details ? <p className="mt-0.5 text-[13px] text-kotta-muted">{details}</p> : null}
+          {origin ? (
+            <p className="mt-1.5 inline-flex rounded-pill border border-kotta-border bg-kotta-light-green px-2.5 py-0.5 text-xs font-semibold text-kotta-text">
+              {origin}
+            </p>
+          ) : null}
         </div>
         <Price cents={receipt.totalCents} size={20} className="shrink-0 text-kotta-text" />
       </div>

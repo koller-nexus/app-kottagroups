@@ -4,6 +4,8 @@ import type {
   ApiInvoiceStatus,
   ApiReceiptItem,
   ApiReceiptMatch,
+  ApiReceiptResolutionPath,
+  ApiReceiptRetry,
   ApiShoppingItem,
 } from "@/lib/api/types";
 import { formatBRL } from "./money.ts";
@@ -134,4 +136,25 @@ export function extractionMethodLabel(method: ApiExtractionMethod | null): strin
   if (method === "qrcode") return "via QR code";
   if (method === "ocr") return "via foto";
   return null;
+}
+
+const RESOLUTION_PATH_LABEL: Record<ApiReceiptResolutionPath, string> = {
+  qr_image: "Lido pelo QR code",
+  printed_key: "Lido pela chave de acesso",
+  qr_submitted: "QR code",
+  text: "Lido da foto — confira os itens",
+};
+
+/** Selo da origem do resultado; null sem origem ou com origem que esta versão não conhece. */
+export function resolutionPathLabel(path: ApiReceiptResolutionPath | null): string | null {
+  return path ? (RESOLUTION_PATH_LABEL[path] ?? null) : null;
+}
+
+/** "Tentar de novo" só em nota que falhou ou pede revisão, e só se a API permitir. */
+export function canRetryReceipt(receipt: { status: ApiInvoiceStatus | null; retry: ApiReceiptRetry }): boolean {
+  return receipt.retry.allowed && (receipt.status === "failed" || receipt.status === "needs_review");
+}
+
+export function retriesLeftLabel(remaining: number): string {
+  return remaining === 1 ? "1 tentativa restante" : `${remaining} tentativas restantes`;
 }

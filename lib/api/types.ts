@@ -150,8 +150,18 @@ export interface ApiReceiptMatch {
   invoiceItem: ApiReceiptItem | null;
 }
 
-/** GET /shopping-lists/{id}/receipt. items e matches ficam vazios enquanto a nota é lida. */
+/** De onde veio o resultado da leitura. */
+export type ApiReceiptResolutionPath = "qr_image" | "printed_key" | "qr_submitted" | "text";
+
+export interface ApiReceiptRetry {
+  allowed: boolean;
+  remaining: number;
+}
+
+/** GET /shopping-lists/{id}/receipt. items, matches, establishment e total ficam vazios enquanto a nota está na fila ou sendo lida. */
 export interface ApiShoppingReceipt extends ApiReceiptSummary {
+  resolutionPath: ApiReceiptResolutionPath | null;
+  retry: ApiReceiptRetry;
   establishment: { cnpj: string | null; name: string; uf: string | null } | null;
   issuedOn: string | null;
   totalCents: number;

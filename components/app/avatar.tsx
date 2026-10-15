@@ -1,9 +1,12 @@
+import { AvatarPhoto } from "@/components/app/avatar-photo";
 import { avatarColors } from "@/lib/theme";
 import { colorIndexFor } from "@/lib/kotta-view";
 
 export interface AvatarPerson {
   id: string;
   name: string;
+  /** Link assinado e temporário; vem sempre da resposta mais recente da API. */
+  avatarUrl?: string | null;
 }
 
 const sizes = {
@@ -30,11 +33,15 @@ export function Avatar({ person, size = "md", className = "" }: AvatarProps) {
   const color = avatarColors[colorIndexFor(person.id, avatarColors.length)];
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${sizes[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white ${sizes[size]} ${className}`}
       style={{ backgroundColor: color }}
       aria-hidden="true"
     >
-      {initials(person.name)}
+      {person.avatarUrl ? (
+        <AvatarPhoto key={person.avatarUrl} src={person.avatarUrl} fallback={initials(person.name)} />
+      ) : (
+        initials(person.name)
+      )}
     </span>
   );
 }

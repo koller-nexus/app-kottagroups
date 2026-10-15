@@ -30,3 +30,10 @@ export function formatLongDay(isoDay: string): string {
     timeZone: "UTC",
   });
 }
+
+/** "março de 2026" a partir do `createdAt` da conta; null se a data não vier ou for inválida. */
+export function formatMemberSince(createdAt: string | null | undefined): string | null {
+  const isoDay = createdAt?.slice(0, 10) ?? "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDay) || Number.isNaN(toDate(isoDay).getTime())) return null;
+  return formatMonthYear(isoDay);
+}

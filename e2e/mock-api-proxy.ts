@@ -19,6 +19,8 @@ interface Scenario {
 }
 
 const scenarios = new Map<string, Scenario>();
+/** GET nestes paths responde o status indicado, como se a API estivesse fora (`PUT/DELETE /__mock/fail`). */
+const failures = new Map<string, number>();
 /** Campos que sobrescrevem a nota do grupo devolvida pela API real (ex.: status). */
 const invoiceOverrides = new Map<string, Record<string, unknown>>();
 const INVOICE_PATH = /^\/api\/v1\/invoices\/([^/]+)$/;
@@ -41,6 +43,21 @@ createServer(async (req, res) => {
   const body = Buffer.concat(chunks);
 
   if (url.pathname === "/__mock/health") return send(res, 200, { ok: true });
+
+  if (url.pathname === "/__mock/fail") {
+    if (method === "PUT") {
+      const { path, status } = JSON.parse(body.toString()) as { path: string; status: number };
+      failures.set(path, status);
+    } else if (method === "DELETE") {
+      failures.clear();
+    }
+    return send(res, 204, {});
+  }
+
+  const failureStatus = method === "GET" ? failures.get(url.pathname) : undefined;
+  if (failureStatus) {
+    return send(res, failureStatus, { error: { code: "SERVICE_UNAVAILABLE", message: "Mock failure." } });
+  }
 
   const invoiceControl = INVOICE_CONTROL_PATH.exec(url.pathname);
   if (invoiceControl && method === "PUT") {

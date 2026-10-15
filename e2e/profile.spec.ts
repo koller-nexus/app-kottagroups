@@ -107,7 +107,7 @@ test("sem os dados da conta, a tela de erro diz que o serviço não respondeu", 
   await page.goto("/perfil");
 
   // Build de produção: o tipo do erro só chega ao navegador pelo digest do ApiError.
-  await expect(page.getByRole("heading", { name: "O Kotta Groups não respondeu" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "O Kotta Groups está fora do ar" })).toBeVisible();
   await clearApiFailures();
   await page.getByRole("button", { name: "Tentar de novo" }).click();
   await expect(page.getByRole("heading", { name: "Perfil", level: 1 })).toBeVisible();

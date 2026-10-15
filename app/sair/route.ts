@@ -2,10 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { apiOrigin } from "@/lib/api/server";
 import { SESSION_COOKIE } from "@/lib/api/session";
 import { safeNextPath } from "@/lib/safe-next";
-
-const FORWARDED_MOTIVOS = new Set(["expirada", "envio"]);
-
-type TokenCheck = "invalid" | "valid" | "unknown";
+import { logoutDestination, type TokenCheck } from "@/lib/session-flow";
 
 // Chamada direta, sem apiRequest: no 401 ele redirecionaria de novo para cá.
 async function checkToken(token: string): Promise<TokenCheck> {
@@ -21,24 +18,18 @@ async function checkToken(token: string): Promise<TokenCheck> {
   }
 }
 
-// Limpa a sessão só quando a API confirma que o token não vale mais. Assim um link
-// de outro site para /sair não desloga ninguém; sair de propósito é o logoutAction (POST).
+// Limpa a sessão só quando a API confirma que o token não vale mais. Assim um link de outro
+// site para /sair não desloga ninguém; sair de propósito é o logoutAction (POST). Com a API
+// fora, volta para a página de origem (ver logoutDestination).
 export async function GET(request: NextRequest) {
   const motivo = request.nextUrl.searchParams.get("motivo");
   const next = safeNextPath(request.nextUrl.searchParams.get("next"));
-
-  const entrar = new URL("/entrar", request.nextUrl);
-  if (motivo && FORWARDED_MOTIVOS.has(motivo)) entrar.searchParams.set("motivo", motivo);
-  if (next !== "/") entrar.searchParams.set("next", next);
-
   const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!token) return NextResponse.redirect(entrar);
 
-  const check = await checkToken(token);
-  if (check === "valid") return NextResponse.redirect(new URL(next, request.nextUrl));
-  if (check === "unknown") return NextResponse.redirect(entrar);
+  const check = token ? await checkToken(token) : "no-token";
+  const { location, clearCookie } = logoutDestination({ check, next, motivo });
 
-  const response = NextResponse.redirect(entrar);
-  response.cookies.delete(SESSION_COOKIE);
+  const response = NextResponse.redirect(new URL(location, request.nextUrl));
+  if (clearCookie) response.cookies.delete(SESSION_COOKIE);
   return response;
 }

@@ -1,22 +1,20 @@
-import { API_UNAVAILABLE_DIGEST } from "../load-error.ts";
-
-const UNAVAILABLE_CODES = new Set(["NETWORK_ERROR", "SERVICE_UNAVAILABLE", "EDGE_BLOCKED", "INTERNAL_ERROR"]);
+import { API_ERROR_DIGEST } from "../error-state.ts";
 
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
   /**
-   * Só quando a API não respondeu. Em produção o Next manda ao cliente apenas o
-   * digest, e respeita um digest já presente; é assim que a tela de erro sabe o tipo.
+   * `API_ERROR:<status>:<code>`. Em produção o Next manda ao cliente apenas o digest, e
+   * respeita um digest já presente; é assim que a tela de erro escolhe a variante e a mensagem.
    */
-  readonly digest?: string;
+  readonly digest: string;
 
   constructor(status: number, code: string, message: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
-    if (status >= 500 || UNAVAILABLE_CODES.has(code)) this.digest = `${API_UNAVAILABLE_DIGEST}${code}`;
+    this.digest = `${API_ERROR_DIGEST}${status}:${code}`;
   }
 }
 

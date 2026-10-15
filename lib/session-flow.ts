@@ -32,3 +32,28 @@ export function expiredSessionUrl(path: string | null | undefined, method: strin
   const params = new URLSearchParams({ motivo: lostSubmit ? "envio" : "expirada", next });
   return `/sair?${params}`;
 }
+
+export type TokenCheck = "valid" | "invalid" | "unknown" | "no-token";
+
+/**
+ * Para onde /sair manda depois de perguntar à API se o token ainda vale. Com a API fora
+ * ("unknown") volta para `next` em vez de /entrar: o cookie pode estar válido e o proxy
+ * devolveria /entrar para /, num pingue-pongue. A página então cai no erro "fora do ar".
+ */
+export function logoutDestination({
+  check,
+  next,
+  motivo,
+}: {
+  check: TokenCheck;
+  /** Já passado por safeNextPath. */
+  next: string;
+  motivo: string | null;
+}): { location: string; clearCookie: boolean } {
+  if (check === "valid" || check === "unknown") return { location: next, clearCookie: false };
+  const params = new URLSearchParams();
+  if (motivo && Object.hasOwn(NOTICES, motivo) && motivo !== "saiu") params.set("motivo", motivo);
+  if (next !== "/") params.set("next", next);
+  const query = params.toString();
+  return { location: query ? `/entrar?${query}` : "/entrar", clearCookie: check === "invalid" };
+}

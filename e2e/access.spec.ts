@@ -20,9 +20,22 @@ test.describe("sem sessão", () => {
     await page.getByLabel("Nome").fill(`E2E ${runId}`);
     await page.getByLabel("E-mail").fill(`e2e+${runId}@example.com`);
     await page.getByLabel("Senha", { exact: true }).fill("senha-e2e-123");
+    await page.getByRole("checkbox", { name: /Li e aceito/ }).check();
     await page.getByRole("button", { name: "Criar conta" }).click();
 
     await expect(page.getByRole("heading", { name: "Confirme seu e-mail" })).toBeVisible();
+  });
+
+  test("cadastrar sem aceitar os termos não envia e mostra o erro no campo", async ({ page }) => {
+    await page.goto("/cadastrar");
+    await page.getByLabel("Nome").fill(`E2E ${runId}`);
+    await page.getByLabel("E-mail").fill(`e2e-sem-aceite+${runId}@example.com`);
+    await page.getByLabel("Senha", { exact: true }).fill("senha-e2e-123");
+    await page.getByRole("button", { name: "Criar conta" }).click();
+
+    await expect(page.getByText("Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.")).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /Li e aceito/ })).toBeFocused();
+    await expect(page).toHaveURL(/\/cadastrar/);
   });
 
   test("esqueci a senha mostra a confirmação de envio", async ({ page }) => {

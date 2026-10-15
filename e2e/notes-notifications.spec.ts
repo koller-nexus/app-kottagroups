@@ -7,6 +7,10 @@ const MOCK_ORIGIN = `http://localhost:${MOCK_API_PORT}`;
 
 const RECEIPT = path.join(__dirname, "..", "tests", "fixtures", "receipts", "sem-qr.jpg");
 
+// PNG 1x1 inline: a simulação da nota não precisa servir arquivo.
+const PIXEL_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
 async function setInvoice(invoiceId: string, override: Record<string, unknown>) {
   const response = await fetch(`${MOCK_ORIGIN}/__mock/invoice/${invoiceId}`, {
     method: "PUT",
@@ -85,6 +89,83 @@ test.describe("notas do grupo", () => {
     await setInvoice(invoiceId, { status: "done", expenseId: null });
     await page.goto(notePath);
     await expect(page.getByRole("heading", { name: "Despesa", level: 2 })).toBeVisible();
+    await setInvoice(invoiceId, {});
+  });
+
+  test("foto enviada fica ao lado da leitura para conferir", async ({ page }) => {
+    const invoiceId = notePath.split("/").pop()!;
+    const photo = page.getByRole("complementary", { name: "Foto enviada" });
+    await setInvoice(invoiceId, {
+      status: "done",
+      expenseId: null,
+      file: { contentType: "image/png", sizeBytes: 68, url: PIXEL_PNG },
+    });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(notePath);
+    await expect(photo.getByRole("img", { name: /^Foto enviada: / })).toBeVisible();
+    const open = photo.getByRole("link");
+    await expect(open).toHaveAttribute("href", PIXEL_PNG);
+    await expect(open).toHaveAttribute("target", "_blank");
+    await open.focus();
+    await expect(open).toBeFocused();
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+
+    // TIFF (ou link vencido) não renderiza: aviso no lugar, com o arquivo ainda acessível.
+    await setInvoice(invoiceId, { file: { contentType: "image/tiff", sizeBytes: 4, url: "data:image/tiff;base64,AAAA" } });
+    await page.goto(notePath);
+    await expect(photo.getByText("Não foi possível carregar a foto.")).toBeVisible();
+    await expect(photo.getByRole("link", { name: "Abrir foto" })).toBeVisible();
+
+    // Nota pelo QR code: sem coluna.
+    await setInvoice(invoiceId, { file: null });
+    await page.goto(notePath);
+    await expect(photo).toHaveCount(0);
+    await setInvoice(invoiceId, {});
+  });
+
+  test("resumo mostra valor dos itens, desconto e total; avisa quando não fecha", async ({ page }) => {
+    const invoiceId = notePath.split("/").pop()!;
+    const line = (description: string, quantity: number, unit: number) => ({
+      description,
+      quantity,
+      unit_amount: unit,
+      line_total: Math.round(quantity * unit * 100) / 100,
+    });
+    const summary = page.locator("dl").first();
+    const mismatch = page.getByText("Os itens não fecham com o total");
+
+    // A nota do exemplo: itens R$ 104,15, desconto impresso R$ 4,15, total R$ 100,00.
+    await setInvoice(invoiceId, {
+      status: "done",
+      expenseId: null,
+      resolutionPath: "ocr",
+      items: [line("COPO PAPEL 110ML PRETO", 6, 14.9), line("MEXEDOR PDRINK CRISTAL", 1, 14.75)],
+      itemsTotal: 100,
+      estimatedTotal: 100,
+    });
+    await page.goto(notePath);
+    await expect(summary.getByText("Valor dos itens")).toBeVisible();
+    await expect(summary.getByRole("img", { name: /^R\$\s104,15$/ })).toBeVisible();
+    await expect(summary.getByText("Desconto")).toBeVisible();
+    await expect(summary.getByRole("img", { name: /^menos R\$\s4,15$/ })).toBeVisible();
+    await expect(summary.getByRole("img", { name: /^R\$\s100,00$/ })).toBeVisible();
+    await expect(page.getByText("Soma dos itens")).toHaveCount(0);
+    await expect(mismatch).toHaveCount(0);
+
+    // Item faltando na leitura: a conta não fecha e a tela avisa.
+    await setInvoice(invoiceId, {
+      status: "done",
+      expenseId: null,
+      resolutionPath: "ocr",
+      items: [line("ITEM", 1, 10)],
+      itemsTotal: 10,
+      estimatedTotal: 15,
+    });
+    await page.goto(notePath);
+    await expect(mismatch).toBeVisible();
+    await expect(summary.getByText("Desconto")).toHaveCount(0);
     await setInvoice(invoiceId, {});
   });
 

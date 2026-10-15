@@ -215,6 +215,10 @@ export interface ApiInvoice {
   riskLabel: string;
   ocrConfidence: number;
   errorMessage?: string;
+  /** Origem da leitura: "", ocr, ocr_escalated, submitted_qr, submitted_key, photo_qr, photo_key. */
+  resolutionPath?: string;
+  /** Foto enviada com URL assinada e temporária; null na nota pelo QR code. Só vem no detalhe. */
+  file?: ApiReceiptFile | null;
   processingMs: number;
   createdAt: string;
   updatedAt: string;

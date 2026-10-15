@@ -72,6 +72,39 @@ export function isInvoiceRead(status: string): boolean {
   return status === "done" || status === "needs_review";
 }
 
+/** Folga da leitura ao conferir somas (o mesmo LineDelta da API). */
+export const TOTAL_TOLERANCE_CENTS = 5;
+
+/** Leitura pelo registro da SEFAZ (QR code ou chave): o total é confiável, mas a API não grava o desconto. */
+const FISCAL_PATHS = new Set(["submitted_qr", "submitted_key", "photo_qr", "photo_key"]);
+
+export interface InvoiceSummary {
+  itemsCents: number;
+  discountCents: number;
+  totalCents: number;
+  /** Itens − desconto − total; 0 quando não dá para comparar. */
+  differenceCents: number;
+}
+
+/** Valor dos itens − desconto = total, com o que a leitura gravou. */
+export function invoiceSummary(
+  invoice: Pick<ApiInvoice, "items" | "itemsTotal" | "estimatedTotal" | "resolutionPath">,
+): InvoiceSummary {
+  const itemsCents = parseInvoiceItems(invoice.items).reduce((sum, item) => sum + item.totalCents, 0);
+  const totalCents = reaisToCents(invoice.estimatedTotal);
+  // No OCR, itemsTotal já vem descontado do desconto impresso; na leitura fiscal, é a soma bruta.
+  const reference = FISCAL_PATHS.has(invoice.resolutionPath ?? "") ? totalCents : reaisToCents(invoice.itemsTotal);
+  const gap = itemsCents - reference;
+  const discountCents = gap > TOTAL_TOLERANCE_CENTS && gap < itemsCents ? gap : 0;
+  const comparable = itemsCents > 0 && totalCents > 0;
+  return {
+    itemsCents,
+    discountCents,
+    totalCents,
+    differenceCents: comparable ? itemsCents - discountCents - totalCents : 0,
+  };
+}
+
 /** Vincular a uma despesa só faz sentido com a nota lida; nota já vinculada segue visível para desvincular. */
 export function canLinkInvoice(invoice: Pick<ApiInvoice, "status" | "expenseId">): boolean {
   return isInvoiceRead(invoice.status) || invoice.expenseId !== null;

@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { ApiError } from "@/lib/api/errors";
-import { apiRequest, withQuery } from "@/lib/api/server";
+import { apiOrigin, apiRequest, withQuery } from "@/lib/api/server";
 import type {
   ApiCategory,
   ApiExpense,
@@ -22,7 +22,11 @@ const PAGE_LIMIT = 100;
 // Teto de páginas por varredura, para não prender a renderização.
 const MAX_PAGES = 10;
 
-export const getMe = cache(() => apiRequest<ApiUser>("/users/me"));
+export const getMe = cache(async () => {
+  const me = await apiRequest<ApiUser>("/users/me");
+  // Sem base URL configurada, a API devolve o link da foto relativo a ela, não à web.
+  return me.avatarUrl ? { ...me, avatarUrl: new URL(me.avatarUrl, apiOrigin()).toString() } : me;
+});
 
 export const listGroups = cache(async (archived = false): Promise<ApiGroupSummary[]> => {
   const all: ApiGroupSummary[] = [];
@@ -93,8 +97,12 @@ export const listSettlements = cache(async (groupId: string) => {
 });
 
 export const listCategories = cache(async () => {
-  const result = await apiRequest<{ items: ApiCategory[] }>("/categories");
-  return result.items;
+  const result = await apiRequest<{ items?: unknown }>("/categories");
+  if (!Array.isArray(result?.items)) {
+    console.error("[api] GET /categories -> resposta sem lista de categorias");
+    throw new ApiError(502, "INVALID_RESPONSE", "Resposta de categorias em formato inesperado.");
+  }
+  return result.items as ApiCategory[];
 });
 
 export const listNotificationsPage = cache(

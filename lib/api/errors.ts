@@ -1,12 +1,22 @@
+import { API_UNAVAILABLE_DIGEST } from "../load-error.ts";
+
+const UNAVAILABLE_CODES = new Set(["NETWORK_ERROR", "SERVICE_UNAVAILABLE", "EDGE_BLOCKED", "INTERNAL_ERROR"]);
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  /**
+   * Só quando a API não respondeu. Em produção o Next manda ao cliente apenas o
+   * digest, e respeita um digest já presente; é assim que a tela de erro sabe o tipo.
+   */
+  readonly digest?: string;
 
   constructor(status: number, code: string, message: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    if (status >= 500 || UNAVAILABLE_CODES.has(code)) this.digest = `${API_UNAVAILABLE_DIGEST}${code}`;
   }
 }
 
@@ -76,6 +86,10 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
       return "Envie uma imagem (JPG, PNG, WebP) ou PDF.";
     case "RECEIPT_TOO_LARGE":
       return "O arquivo passa de 10 MB.";
+    case "AVATAR_TOO_LARGE":
+      return "A foto passa de 5 MB. Escolha uma menor.";
+    case "INVALID_AVATAR_TYPE":
+      return "Use uma foto JPG, PNG ou WebP.";
     case "STORAGE_UNAVAILABLE":
       return "O armazenamento de arquivos está fora do ar. Tente de novo mais tarde.";
     case "FORBIDDEN":

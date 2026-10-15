@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { apiRequest } from "@/lib/api/server";
+import { avatarFileProblem } from "@/lib/avatar";
 import type { ApiSettlement, ApiUser } from "@/lib/api/types";
 import { failure, text, type FormState } from "@/lib/form";
 
@@ -23,6 +25,26 @@ export async function undoSettlementPaidAction(formData: FormData): Promise<void
     method: "DELETE",
   });
   revalidatePath("/", "layout");
+}
+
+export async function updateAvatarAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const value = formData.get("file");
+  const file = value instanceof File ? value : null;
+  const problem = avatarFileProblem(file);
+  if (problem || !file) return { error: problem ?? undefined };
+  // Só o arquivo vai para a API, sem os campos internos do formulário.
+  const body = new FormData();
+  body.set("file", file);
+
+  try {
+    await apiRequest<ApiUser>("/users/me/avatar", { method: "POST", body });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    if (error.code === "VALIDATION_FAILED") return { error: "Escolha uma foto." };
+    return { error: friendlyMessage(error.code, "Não foi possível atualizar a foto. Tente de novo.") };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 export async function updateProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {

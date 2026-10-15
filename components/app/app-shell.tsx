@@ -6,12 +6,17 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { NotificationsButton } from "@/components/app/notifications-button";
 import { MobileTabBar, SidebarNav } from "@/components/app/sidebar-nav";
 import { SubmitLostNotice } from "@/components/app/submit-lost-notice";
+import { ApiError } from "@/lib/api/errors";
 import { getMe, getNotificationCount, listGroups } from "@/lib/api/kotta";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const [me, groups, pendingCount] = await Promise.all([
     getMe(),
-    listGroups(),
+    // Sem grupos, a navegação só perde os atalhos; a tela continua abrindo (issue #11).
+    listGroups().catch((error: unknown) => {
+      if (error instanceof ApiError) return [];
+      throw error;
+    }),
     getNotificationCount(),
   ]);
   const groupLinks = groups.map(({ id, name, emoji }) => ({ id, name, emoji }));

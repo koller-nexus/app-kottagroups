@@ -12,7 +12,20 @@ const NOTICES: Record<string, string> = {
   saiu: "Você saiu da conta.",
   expirada: EXPIRED_NOTICE,
   envio: EXPIRED_NOTICE,
+  "conta-criada": "Conta criada! Entre para continuar.",
 };
+
+const SESSION_EXPIRED_MOTIVOS = new Set(["expirada", "envio"]);
+
+/** Login depois de um cadastro cujo login automático falhou: a conta já existe. */
+export function accountCreatedLoginUrl(email: string): string {
+  return `/entrar?${new URLSearchParams({ motivo: "conta-criada", email })}`;
+}
+
+/** "Confirme seu e-mail" mantendo para onde a pessoa ia (já passado por safeNextPath). */
+export function confirmEmailUrl(next: string): string {
+  return next === "/" ? "/confirme-seu-email" : `/confirme-seu-email?${new URLSearchParams({ next })}`;
+}
 
 /** Aviso da tela de entrar para cada `motivo` (saiu | expirada | envio). */
 export function loginNotice(motivo: unknown): string | undefined {
@@ -52,7 +65,7 @@ export function logoutDestination({
 }): { location: string; clearCookie: boolean } {
   if (check === "valid" || check === "unknown") return { location: next, clearCookie: false };
   const params = new URLSearchParams();
-  if (motivo && Object.hasOwn(NOTICES, motivo) && motivo !== "saiu") params.set("motivo", motivo);
+  if (motivo && SESSION_EXPIRED_MOTIVOS.has(motivo)) params.set("motivo", motivo);
   if (next !== "/") params.set("next", next);
   const query = params.toString();
   return { location: query ? `/entrar?${query}` : "/entrar", clearCookie: check === "invalid" };

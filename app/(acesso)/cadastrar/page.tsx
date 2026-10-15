@@ -12,7 +12,7 @@ export default function CadastrarPage() {
         Criar conta
       </h1>
       <p className="mt-3 mb-8 text-base text-kotta-muted">
-        Com a conta você divide gastos com seus grupos no site e no app.
+        Com a conta você divide gastos com seus grupos.
       </p>
       <RegisterForm />
     </>

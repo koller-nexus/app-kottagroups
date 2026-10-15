@@ -8,14 +8,26 @@ export class ApiError extends Error {
    * respeita um digest já presente; é assim que a tela de erro escolhe a variante e a mensagem.
    */
   readonly digest: string;
+  /** Segundos do cabeçalho `Retry-After`, quando a API manda. */
+  readonly retryAfter?: number;
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, retryAfter?: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.digest = `${API_ERROR_DIGEST}${status}:${code}`;
+    this.retryAfter = retryAfter;
   }
+}
+
+const RATE_LIMITED_MESSAGE = "Muitas tentativas seguidas. Espere um pouco e tente de novo.";
+
+/** Mensagem de excesso de tentativas, com o tempo de espera quando a API informa. */
+export function rateLimitMessage(retryAfter?: number): string {
+  if (retryAfter === undefined || retryAfter <= 0) return RATE_LIMITED_MESSAGE;
+  const wait = retryAfter < 60 ? `${retryAfter} s` : `${Math.ceil(retryAfter / 60)} min`;
+  return `Muitas tentativas seguidas. Tente de novo em ${wait}.`;
 }
 
 /** Lê `{ code, message }` ou `{ error: { code, message } }`. */
@@ -43,7 +55,11 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
     case "EMAIL_EXISTS":
       return "Já existe uma conta com este e-mail. Entre com ela.";
     case "RATE_LIMITED":
-      return "Muitas tentativas seguidas. Espere alguns minutos e tente de novo.";
+      return RATE_LIMITED_MESSAGE;
+    case "EMAIL_NOT_CONFIRMED":
+      return "Confirme seu e-mail para continuar.";
+    case "INVALID_TOKEN":
+      return "Este link não é mais válido. Peça um novo.";
     case "VALIDATION_FAILED":
       return "Confira os campos e tente de novo.";
     case "GROUP_ARCHIVED":

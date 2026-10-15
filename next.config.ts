@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
       { source: "/painel", destination: "/", permanent: false },
       { source: "/notas", destination: "/grupos", permanent: false },
       { source: "/notas/:id", destination: "/grupos", permanent: false },
+      // Links dos e-mails da API; a query (?token=…) é repassada.
+      { source: "/confirm-email", destination: "/confirmar-email", permanent: false },
+      { source: "/forget-password", destination: "/redefinir-senha", permanent: false },
     ];
   },
   async rewrites() {

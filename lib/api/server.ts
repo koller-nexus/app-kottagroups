@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ApiError, parseErrorBody } from "@/lib/api/errors";
 import { getSessionToken } from "@/lib/api/session";
 import { safeNextPath } from "@/lib/safe-next";
-import { expiredSessionUrl, PATH_HEADER } from "@/lib/session-flow";
+import { confirmEmailUrl, expiredSessionUrl, PATH_HEADER } from "@/lib/session-flow";
 
 export function apiOrigin(): string {
   return (process.env.API_ORIGIN ?? "https://api.kottagroups.com.br").replace(/\/$/, "");
@@ -68,9 +68,9 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
       redirect(expiredSessionUrl(await currentPath(), method));
     }
     if (auth && response.status === 403 && code === "EMAIL_NOT_CONFIRMED") {
-      redirect("/confirme-seu-email");
+      redirect(confirmEmailUrl(safeNextPath(await currentPath())));
     }
-    throw new ApiError(response.status, code, parsed?.message ?? response.statusText);
+    throw new ApiError(response.status, code, parsed?.message ?? response.statusText, retryAfterSeconds(response));
   }
 
   if (response.status === 204) return undefined as T;
@@ -81,6 +81,12 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
 /** Página que fez a chamada, gravada pelo proxy.ts; vira o "voltar para" ao entrar de novo. */
 async function currentPath(): Promise<string | null> {
   return (await requestHeaders()).get(PATH_HEADER);
+}
+
+/** `Retry-After` em segundos; a forma de data HTTP não é usada pela API. */
+function retryAfterSeconds(response: Response): number | undefined {
+  const seconds = Number(response.headers.get("retry-after"));
+  return Number.isInteger(seconds) && seconds > 0 ? seconds : undefined;
 }
 
 /** Código para respostas de erro sem o envelope JSON da API. */

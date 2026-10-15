@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Avatar } from "@/components/app/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { LegalLinks } from "@/components/legal/legal-links";
 import { Page, SectionLabel } from "@/components/app/page-header";
 import { SectionBoundary } from "@/components/app/section-error";
 import { AvatarForm } from "@/components/forms/avatar-form";
@@ -62,6 +63,7 @@ export default async function PerfilPage() {
           <div className="w-full">
             <LogoutButton label="Sair da conta" />
           </div>
+          <LegalLinks className="justify-center" />
         </section>
 
         <div className="flex flex-col gap-8 lg:gap-12">

@@ -42,6 +42,10 @@ export function InvoicePhoto({ file, name }: { file: ApiReceiptFile; name: strin
         src={url}
         alt={`Foto enviada: ${name}`}
         onError={() => setFailed(true)}
+        // A imagem pode falhar antes da hidratação, quando o onError ainda não existe.
+        ref={(img) => {
+          if (img?.complete && img.naturalWidth === 0) setFailed(true);
+        }}
         className="w-full object-contain lg:max-h-[calc(100vh-3rem)]"
       />
     </a>

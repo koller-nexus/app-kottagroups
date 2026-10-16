@@ -21,6 +21,11 @@ export function isInvoicePending(status: string): boolean {
   return status === "queued" || status === "processing";
 }
 
+/** Ids das notas ainda em leitura, para o acompanhamento de status. */
+export function pendingInvoiceIds(invoices: Pick<ApiInvoice, "id" | "status">[]): string[] {
+  return invoices.filter((invoice) => isInvoicePending(invoice.status)).map((invoice) => invoice.id);
+}
+
 /** Reais (float da API) para centavos, como o Price espera. */
 export function reaisToCents(reais: number): number {
   return Math.round((Number.isFinite(reais) ? reais : 0) * 100);

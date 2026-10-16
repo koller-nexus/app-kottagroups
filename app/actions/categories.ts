@@ -7,6 +7,9 @@ import { apiRequest, withQuery } from "@/lib/api/server";
 import type { ApiCategory } from "@/lib/api/types";
 import { failure, text, type FormState } from "@/lib/form";
 
+// O rótulo e o emoji da categoria aparecem em toda lista de despesas (grupos, Painel, detalhes):
+// invalidar o app inteiro é o escopo certo, e a ação é rara.
+
 const LABEL_MAX = 64;
 
 export async function saveCategoryAction(_prev: FormState, formData: FormData): Promise<FormState> {

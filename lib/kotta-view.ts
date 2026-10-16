@@ -1,5 +1,7 @@
 // Funções puras sobre as respostas da api-kottagroups (sem I/O).
 
+import type { ApiDashboard } from "@/lib/api/types";
+
 export const APP_TIME_ZONE = "America/Sao_Paulo";
 
 interface WithCreatedAt {
@@ -37,10 +39,6 @@ export function previousMonth(monthKey: string): string {
  * Instante seguro para buscar despesas desde o início do mês anterior:
  * dia 1 às 00:00 UTC, que é antes da meia-noite de Brasília.
  */
-export function previousMonthStartIso(nowIso: string): string {
-  return `${previousMonth(localMonth(nowIso))}-01T00:00:00.000Z`;
-}
-
 export function monthSpend(
   expenses: (WithCreatedAt & { amountCents: number })[],
   nowIso: string,
@@ -124,4 +122,37 @@ export function parseAmountToCents(input: string): number | null {
   const [whole, fraction = ""] = normalized.split(".");
   const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
   return Number.isSafeInteger(cents) && cents > 0 ? cents : null;
+}
+
+/** Resposta de `GET /me/dashboard` no formato do `DashboardView`; `names` vem dos membros dos grupos. */
+export function dashboardViewFrom(dashboard: ApiDashboard, names: Map<string, string>) {
+  return {
+    receivesCents: dashboard.totals.receivesCents,
+    owesCents: dashboard.totals.owesCents,
+    monthSpend: {
+      currentMonthCents: dashboard.monthSpend.currentCents,
+      previousMonthCents: dashboard.monthSpend.previousCents,
+    },
+    // A API já devolve só as quitações que envolvem você, mais recentes primeiro.
+    recent: dashboard.recent.map((item) => {
+      const youReceive = item.direction === "incoming";
+      return {
+        id: item.id,
+        youReceive,
+        otherName: names.get(youReceive ? item.from : item.to) ?? "Ex-membro",
+        amountCents: item.amountCents,
+        paid: item.paid,
+        groupName: item.group.name,
+        href: `/grupos/${item.group.id}?aba=saldos`,
+      };
+    }),
+    groups: dashboard.groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      emoji: group.emoji,
+      memberCount: group.membersCount,
+      netCents: group.netCents,
+      href: `/grupos/${group.id}`,
+    })),
+  };
 }

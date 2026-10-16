@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useOptimistic, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   addShoppingItemAction,
   createShoppingListAction,
@@ -163,6 +163,21 @@ export function ShoppingItemRow({
     if (result.ok) setEditing(false);
     return result;
   }, initialState);
+  // Marcar aparece na hora; ao fim da ação vale o que o servidor devolveu (ou volta, se falhou).
+  const [completed, setOptimisticCompleted] = useOptimistic(item.completed);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  async function toggle(formData: FormData) {
+    setOptimisticCompleted(!completed);
+    setToggleError(null);
+    try {
+      const result = await toggleShoppingItemAction(formData);
+      if (!result.ok) setToggleError(result.error);
+    } catch {
+      // A chamada nem chegou ao servidor (sem rede).
+      setToggleError("Sem conexão. O item não foi marcado.");
+    }
+  }
 
   if (editing) {
     return (
@@ -198,10 +213,10 @@ export function ShoppingItemRow({
     <span
       aria-hidden="true"
       className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
-        item.completed ? "border-kotta-primary bg-kotta-primary text-white" : "border-kotta-border-strong bg-kotta-surface"
+        completed ? "border-kotta-primary bg-kotta-primary text-white" : "border-kotta-border-strong bg-kotta-surface"
       }`}
     >
-      {item.completed ? (
+      {completed ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="size-4">
           <path d="M5 12.5l4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -214,14 +229,14 @@ export function ShoppingItemRow({
       {readOnly ? (
         <span className="flex size-11 items-center justify-center">{box}</span>
       ) : (
-        <form action={toggleShoppingItemAction}>
+        <form action={toggle}>
           <input type="hidden" name="itemId" value={item.id} />
-          <input type="hidden" name="completed" value={String(!item.completed)} />
+          <input type="hidden" name="completed" value={String(!completed)} />
           <button
             type="submit"
             role="checkbox"
-            aria-checked={item.completed}
-            aria-label={`${item.name}, ${item.completed ? "comprado" : "pendente"}`}
+            aria-checked={completed}
+            aria-label={`${item.name}, ${completed ? "comprado" : "pendente"}`}
             className={`flex size-11 items-center justify-center rounded-control ${focus}`}
           >
             {box}
@@ -231,13 +246,18 @@ export function ShoppingItemRow({
       <div className="min-w-0 flex-1">
         <p
           className={`truncate text-base font-semibold ${
-            item.completed ? "text-kotta-muted line-through" : "text-kotta-text"
+            completed ? "text-kotta-muted line-through" : "text-kotta-text"
           }`}
         >
           {item.name}
         </p>
         <p className="text-[13px] text-kotta-muted">Quantidade: {item.quantity}</p>
         <ItemMatchLine state={matchState} invoiceItem={invoiceItem} />
+        {toggleError ? (
+          <p role="status" className="text-[13px] text-kotta-danger">
+            {toggleError}
+          </p>
+        ) : null}
         {matchState === "review" && item.match && !readOnly ? (
           <MatchDecision matchId={item.match.id} itemName={item.name} />
         ) : null}

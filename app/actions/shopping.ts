@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { ApiError } from "@/lib/api/errors";
 import { apiRequest } from "@/lib/api/server";
 import type { ApiReceiptAccepted, ApiShoppingItem, ApiShoppingListDetail } from "@/lib/api/types";
 import { failure, text, type FormState } from "@/lib/form";
@@ -9,6 +10,18 @@ import { accessKeyFromQrUrl, accessKeyProblem, normalizeAccessKey } from "@/lib/
 import { parseQuantity, validateItemName, validateListName, validateReceipt } from "@/lib/shopping";
 
 const enc = encodeURIComponent;
+
+// Listas e itens só aparecem na tela da lista e na aba de listas do grupo; o shell não muda.
+function revalidateLists(): void {
+  revalidatePath("/grupos/[id]/listas/[listId]", "page");
+  revalidatePath("/grupos/[id]", "page");
+}
+
+// A nota lida pode virar despesa do grupo, então atualiza também as telas do grupo e o Painel.
+function revalidateReceipt(): void {
+  revalidatePath("/grupos/[id]", "layout");
+  revalidatePath("/");
+}
 
 export async function createShoppingListAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const groupId = text(formData, "groupId");
@@ -27,7 +40,7 @@ export async function createShoppingListAction(_prev: FormState, formData: FormD
   } catch (error) {
     return failure(error, values);
   }
-  revalidatePath("/", "layout");
+  revalidateLists();
   redirect(`/grupos/${enc(groupId)}/listas/${enc(list.id)}`);
 }
 
@@ -44,7 +57,7 @@ export async function renameShoppingListAction(_prev: FormState, formData: FormD
   } catch (error) {
     return failure(error, values);
   }
-  revalidatePath("/", "layout");
+  revalidateLists();
   return { ok: true, values };
 }
 
@@ -53,7 +66,7 @@ export async function deleteShoppingListAction(formData: FormData): Promise<void
   const listId = text(formData, "listId");
   if (!groupId || !listId) return;
   await apiRequest(`/shopping-lists/${enc(listId)}`, { method: "DELETE" });
-  revalidatePath("/", "layout");
+  revalidateLists();
   redirect(`/grupos/${enc(groupId)}`);
 }
 
@@ -76,7 +89,7 @@ export async function addShoppingItemAction(_prev: FormState, formData: FormData
   } catch (error) {
     return failure(error, values);
   }
-  revalidatePath("/", "layout");
+  revalidateLists();
   // Volta vazio para o próximo item.
   return { ok: true };
 }
@@ -101,26 +114,34 @@ export async function updateShoppingItemAction(_prev: FormState, formData: FormD
   } catch (error) {
     return failure(error, values);
   }
-  revalidatePath("/", "layout");
+  revalidateLists();
   return { ok: true, values };
 }
 
-/** Marca ou desmarca o item como comprado. */
-export async function toggleShoppingItemAction(formData: FormData): Promise<void> {
+export type ToggleItemResult = { ok: true } | { ok: false; error: string };
+
+/** Marca ou desmarca o item como comprado; a tela já mostrou a mudança e desfaz se vier erro. */
+export async function toggleShoppingItemAction(formData: FormData): Promise<ToggleItemResult> {
   const itemId = text(formData, "itemId");
-  if (!itemId) return;
-  await apiRequest<ApiShoppingItem>(`/shopping-items/${enc(itemId)}`, {
-    method: "PATCH",
-    body: { completed: text(formData, "completed") === "true" },
-  });
-  revalidatePath("/", "layout");
+  if (!itemId) return { ok: false, error: "Item não encontrado." };
+  try {
+    await apiRequest<ApiShoppingItem>(`/shopping-items/${enc(itemId)}`, {
+      method: "PATCH",
+      body: { completed: text(formData, "completed") === "true" },
+    });
+  } catch (error) {
+    if (error instanceof ApiError) return { ok: false, error: "Não foi possível marcar o item. Tente de novo." };
+    throw error;
+  }
+  revalidateLists();
+  return { ok: true };
 }
 
 export async function deleteShoppingItemAction(formData: FormData): Promise<void> {
   const itemId = text(formData, "itemId");
   if (!itemId) return;
   await apiRequest(`/shopping-items/${enc(itemId)}`, { method: "DELETE" });
-  revalidatePath("/", "layout");
+  revalidateLists();
 }
 
 export async function uploadReceiptAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -139,7 +160,7 @@ export async function uploadReceiptAction(_prev: FormState, formData: FormData):
   } catch (error) {
     return failure(error);
   }
-  revalidatePath("/", "layout");
+  revalidateReceipt();
   return { ok: true };
 }
 
@@ -166,7 +187,7 @@ export async function submitReceiptCodeAction(_prev: FormState, formData: FormDa
   } catch (error) {
     return failure(error, rawKey ? { accessKey: rawKey } : undefined);
   }
-  revalidatePath("/", "layout");
+  revalidateReceipt();
   return { ok: true };
 }
 
@@ -179,7 +200,7 @@ export async function retryReceiptAction(_prev: FormState, formData: FormData): 
   } catch (error) {
     return failure(error);
   }
-  revalidatePath("/", "layout");
+  revalidateReceipt();
   return { ok: true };
 }
 
@@ -187,7 +208,7 @@ export async function deleteReceiptAction(formData: FormData): Promise<void> {
   const listId = text(formData, "listId");
   if (!listId) return;
   await apiRequest(`/shopping-lists/${enc(listId)}/receipt`, { method: "DELETE" });
-  revalidatePath("/", "layout");
+  revalidateReceipt();
 }
 
 const MATCH_DECISIONS = new Set(["confirmed", "rejected"]);
@@ -203,6 +224,6 @@ export async function decideMatchAction(_prev: FormState, formData: FormData): P
   } catch (error) {
     return failure(error);
   }
-  revalidatePath("/", "layout");
+  revalidateLists();
   return { ok: true };
 }

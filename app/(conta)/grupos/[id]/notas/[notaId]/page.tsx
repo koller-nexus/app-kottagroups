@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteInvoiceAction } from "@/app/actions/invoices";
 import { FormError } from "@/components/auth/field";
-import { AutoRefresh } from "@/components/app/auto-refresh";
+import { InvoiceStatusWatcher } from "@/components/app/invoice-status-watcher";
 import { ConfirmDelete } from "@/components/app/confirm-delete";
 import { InvoiceExpenseSection } from "@/components/app/invoice-expense-section";
 import { InvoiceFailedRecovery } from "@/components/app/invoice-failed-recovery";
@@ -64,7 +64,7 @@ export default async function GrupoNotaPage({ params, searchParams }: PageProps<
         </ConfirmDelete>
       ) : null}
 
-      {pending ? <AutoRefresh /> : null}
+      {pending ? <InvoiceStatusWatcher ids={[invoice.id]} /> : null}
       {/* Vazio quando a nota está pronta; escondido para não somar espaço na pilha. */}
       <div aria-live="polite" className="empty:hidden">
         {pending ? (

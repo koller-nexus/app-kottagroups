@@ -7,6 +7,9 @@ import { avatarFileProblem } from "@/lib/avatar";
 import type { ApiSettlement, ApiUser } from "@/lib/api/types";
 import { failure, text, type FormState } from "@/lib/form";
 
+// Quitações mudam o contador do sino; avatar e nome aparecem no shell. Todas as actions daqui
+// afetam o shell, então invalidam o app inteiro ("/", "layout").
+
 export type { FormState };
 
 export async function markSettlementPaidAction(formData: FormData): Promise<void> {

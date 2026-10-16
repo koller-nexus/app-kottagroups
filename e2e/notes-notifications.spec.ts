@@ -92,6 +92,28 @@ test.describe("notas do grupo", () => {
     await setInvoice(invoiceId, {});
   });
 
+  test("nota em leitura consulta só o status e atualiza a tela quando termina", async ({ page }) => {
+    const invoiceId = notePath.split("/").pop()!;
+    await setInvoice(invoiceId, { status: "processing", expenseId: null });
+    const statusChecks: string[] = [];
+    // router.refresh() é um request RSC sem o cabeçalho de prefetch dos links.
+    const refreshes: string[] = [];
+    page.on("request", (request) => {
+      const headers = request.headers();
+      if (request.url().includes("/api/notas/status")) statusChecks.push(request.url());
+      else if (headers.rsc && !headers["next-router-prefetch"]) refreshes.push(request.url());
+    });
+
+    await page.goto(notePath);
+    await expect.poll(() => statusChecks.length, { timeout: 10_000 }).toBeGreaterThan(0);
+    expect(refreshes).toHaveLength(0);
+
+    await setInvoice(invoiceId, { status: "done", expenseId: null });
+    await expect(page.getByRole("heading", { name: "Despesa", level: 2 })).toBeVisible({ timeout: 15_000 });
+    expect(refreshes).toHaveLength(1);
+    await setInvoice(invoiceId, {});
+  });
+
   test("foto enviada fica ao lado da leitura para conferir", async ({ page }) => {
     const invoiceId = notePath.split("/").pop()!;
     const photo = page.getByRole("complementary", { name: "Foto enviada" });

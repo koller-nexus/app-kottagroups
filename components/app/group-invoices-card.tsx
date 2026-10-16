@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { AutoRefresh } from "@/components/app/auto-refresh";
+import { InvoiceStatusWatcher } from "@/components/app/invoice-status-watcher";
 import { InvoiceStatus } from "@/components/app/invoice-status";
 import { SectionLabel } from "@/components/app/page-header";
 import { listGroupInvoicesPage } from "@/lib/api/kotta";
 import { ApiError } from "@/lib/api/errors";
 import type { ApiInvoice, CursorPage } from "@/lib/api/types";
 import { formatShortDate } from "@/lib/dates";
-import { isInvoicePending } from "@/lib/invoices";
+import { pendingInvoiceIds } from "@/lib/invoices";
 import { localDay } from "@/lib/kotta-view";
 
 const RECENT_INVOICES = 3;
@@ -27,7 +27,7 @@ export async function GroupInvoicesCard({ groupId, archived }: { groupId: string
   return (
     <section aria-labelledby={`notas-${groupId}`}>
       <SectionLabel id={`notas-${groupId}`}>Notas</SectionLabel>
-      {page?.items.some((invoice) => isInvoicePending(invoice.status)) ? <AutoRefresh /> : null}
+      <InvoiceStatusWatcher ids={pendingInvoiceIds(page?.items ?? [])} />
       {loadError ? (
         <p role="alert" className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
           {loadError}

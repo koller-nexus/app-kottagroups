@@ -216,7 +216,13 @@ function ReceiptPreview({ receipt }: { receipt: ApiReceiptSummary }) {
         >
           {/* URL assinada e temporária do armazenamento: next/image não ajuda aqui. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={file.url} alt="Nota fiscal da lista" className="max-h-72 w-full bg-kotta-bg object-contain" />
+          <img
+            src={file.url}
+            alt="Nota fiscal da lista"
+            loading="lazy"
+            decoding="async"
+            className="max-h-72 w-full bg-kotta-bg object-contain"
+          />
         </a>
       ) : null}
       <p className="text-sm text-kotta-text">

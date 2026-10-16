@@ -7,6 +7,9 @@ import { apiRequest } from "@/lib/api/server";
 import type { ApiGroupDetail } from "@/lib/api/types";
 import { failure, text, type FormState } from "@/lib/form";
 
+// Grupos e membros aparecem no menu do shell e mudam os saldos (sino): as actions daqui
+// invalidam o app inteiro ("/", "layout").
+
 const groupPath = (id: string) => `/groups/${encodeURIComponent(id)}`;
 
 /**

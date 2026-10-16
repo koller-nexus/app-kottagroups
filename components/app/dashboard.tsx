@@ -1,63 +1,46 @@
+import { Suspense } from "react";
 import { DASHBOARD_TAGLINE, DashboardView } from "@/components/app/dashboard-view";
 import { Page } from "@/components/app/page-header";
-import {
-  getMe,
-  listExpensesSince,
-  listGroupDetails,
-  listNotificationsPage,
-} from "@/lib/api/kotta";
-import { balanceTotals, monthSpend, netFor, previousMonthStartIso } from "@/lib/kotta-view";
+import { SectionBoundary } from "@/components/app/section-error";
+import { getDashboard, getMe, listGroupDetails } from "@/lib/api/kotta";
+import { dashboardViewFrom } from "@/lib/kotta-view";
 import { firstName, peopleById } from "@/lib/people";
 
-// Mesmo limite do DashboardViewModel do app.
-const RECENT_LIMIT = 3;
-
 export async function Dashboard() {
-  const nowIso = new Date().toISOString();
-  const since = previousMonthStartIso(nowIso);
-  const [me, groups, notifications] = await Promise.all([
-    getMe(),
-    listGroupDetails(),
-    listNotificationsPage("all", RECENT_LIMIT),
-  ]);
-  const monthExpenses = await Promise.all(groups.map((g) => listExpensesSince(g.id, since)));
-
-  const names = peopleById(groups);
-  const totals = balanceTotals(groups.map((g) => g.balances), me.id);
-
+  // getMe já foi pedido pelo shell; o React.cache devolve o mesmo resultado.
+  const me = await getMe();
   return (
     <Page title={`Olá, ${firstName(me.name)}`} description={DASHBOARD_TAGLINE}>
-      <DashboardView
-        receivesCents={totals.receivesCents}
-        owesCents={totals.owesCents}
-        monthSpend={monthSpend(monthExpenses.flat(), nowIso)}
-        // A API já devolve só as quitações que envolvem você, mais recentes primeiro.
-        recent={notifications.items.map((item) => {
-          const youReceive = item.direction === "incoming";
-          return {
-            id: item.id,
-            youReceive,
-            otherName: names.get(youReceive ? item.from : item.to) ?? "Ex-membro",
-            amountCents: item.amountCents,
-            paid: item.paid,
-            groupName: item.group.name,
-            href: `/grupos/${item.group.id}?aba=saldos`,
-          };
-        })}
-        groups={groups.map((group) => ({
-          id: group.id,
-          name: group.name,
-          emoji: group.emoji,
-          memberCount: group.members.length,
-          netCents: netFor(group.balances, me.id),
-          href: `/grupos/${group.id}`,
-        }))}
-        empty={{
-          text: "Você ainda não participa de nenhum grupo. Crie o primeiro.",
-          actionLabel: "Criar grupo",
-          actionHref: "/grupos/novo",
-        }}
-      />
+      <SectionBoundary message="Não foi possível carregar o seu painel.">
+        <Suspense fallback={<DashboardSkeleton />}>
+          <DashboardData />
+        </Suspense>
+      </SectionBoundary>
     </Page>
+  );
+}
+
+async function DashboardData() {
+  // Nº fixo de chamadas: o resumo vem pronto e os grupos em lote só dão os nomes da atividade recente.
+  const [dashboard, groups] = await Promise.all([getDashboard(), listGroupDetails()]);
+  return (
+    <DashboardView
+      {...dashboardViewFrom(dashboard, peopleById(groups))}
+      empty={{
+        text: "Você ainda não participa de nenhum grupo. Crie o primeiro.",
+        actionLabel: "Criar grupo",
+        actionHref: "/grupos/novo",
+      }}
+    />
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div aria-busy="true" aria-live="polite" className="grid animate-pulse grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+      <span className="sr-only">Carregando…</span>
+      <div className="h-48 rounded-card border border-kotta-border bg-kotta-surface" />
+      <div className="h-48 rounded-card border border-kotta-border bg-kotta-surface" />
+    </div>
   );
 }

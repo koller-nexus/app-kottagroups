@@ -6,7 +6,7 @@ import { AvatarStack } from "@/components/app/avatar";
 import { PlusIcon } from "@/components/app/icons";
 import { Page } from "@/components/app/page-header";
 import { BalanceChip } from "@/components/app/balance-chip";
-import { getGroup, getMe, listExpensesPage, listGroupDetails, listGroups } from "@/lib/api/kotta";
+import { getMe, listExpensesPage, listGroupDetails } from "@/lib/api/kotta";
 import { formatShortDate } from "@/lib/dates";
 import { localDay, netFor } from "@/lib/kotta-view";
 import { canManageGroup } from "@/lib/permissions";
@@ -26,11 +26,11 @@ export default async function GruposPage({ searchParams }: PageProps<"/grupos">)
 
   const [me, all] = await Promise.all([
     getMe(),
-    archived
-      ? listGroups(true).then((list) => Promise.all(list.map((g) => getGroup(g.id))))
-      : listGroupDetails(),
+    listGroupDetails(archived),
   ]);
   const groups = query ? all.filter((g) => fold(g.name).includes(fold(query))) : all;
+  // ponytail: uma chamada por grupo para a data da última despesa; some quando a API
+  // devolver essa data junto do grupo (ex.: `lastExpenseAt` no `include`).
   const lastExpenses = await Promise.all(groups.map((g) => listExpensesPage(g.id, 1)));
 
   const empty = query

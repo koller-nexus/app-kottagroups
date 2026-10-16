@@ -41,6 +41,8 @@ export function InvoicePhoto({ file, name }: { file: ApiReceiptFile; name: strin
       <img
         src={url}
         alt={`Foto enviada: ${name}`}
+        // É o maior elemento da página da nota: carrega já, só decodifica fora da thread principal.
+        decoding="async"
         onError={() => setFailed(true)}
         // A imagem pode falhar antes da hidratação, quando o onError ainda não existe.
         ref={(img) => {

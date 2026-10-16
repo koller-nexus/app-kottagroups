@@ -4,6 +4,7 @@ import { ApiError } from "@/lib/api/errors";
 import { apiOrigin, apiRequest, withQuery } from "@/lib/api/server";
 import type {
   ApiCategory,
+  ApiDashboard,
   ApiExpense,
   ApiExpenseDetail,
   ApiGroupDetail,
@@ -21,6 +22,8 @@ import type {
 const PAGE_LIMIT = 100;
 // Teto de páginas por varredura, para não prender a renderização.
 const MAX_PAGES = 10;
+// Limite da API para `/groups` com `include`.
+const GROUP_DETAILS_PAGE_LIMIT = 50;
 
 export const getMe = cache(async () => {
   const me = await apiRequest<ApiUser>("/users/me");
@@ -46,11 +49,22 @@ export const getGroup = cache((id: string) =>
   apiRequest<ApiGroupDetail>(`/groups/${encodeURIComponent(id)}`),
 );
 
-/** Detalhe de todos os grupos ativos, em paralelo. */
-export const listGroupDetails = cache(async (): Promise<ApiGroupDetail[]> => {
-  const groups = await listGroups();
-  return Promise.all(groups.map((group) => getGroup(group.id)));
+/** Detalhe (membros e saldos) de todos os grupos ativos (ou arquivados), em lote. */
+export const listGroupDetails = cache(async (archived = false): Promise<ApiGroupDetail[]> => {
+  const all: ApiGroupDetail[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const result = await apiRequest<CursorPage<ApiGroupDetail>>(
+      withQuery("/groups", { include: "members,balances", limit: GROUP_DETAILS_PAGE_LIMIT, cursor, archived }),
+    );
+    all.push(...result.items);
+    if (!result.hasMore || !result.nextCursor) break;
+    cursor = result.nextCursor;
+  }
+  return all;
 });
+
+export const getDashboard = cache(() => apiRequest<ApiDashboard>("/me/dashboard"));
 
 export const listExpensesPage = cache(
   (groupId: string, limit: number = PAGE_LIMIT, cursor?: string, category?: string) =>
@@ -69,25 +83,6 @@ export const getGroupBalances = cache(async (groupId: string) => {
   );
   return result.balances;
 });
-
-/**
- * Despesas do grupo criadas a partir de `sinceIso`. A API devolve da mais
- * nova para a mais antiga, então a varredura para na primeira mais antiga.
- */
-export async function listExpensesSince(groupId: string, sinceIso: string): Promise<ApiExpense[]> {
-  const out: ApiExpense[] = [];
-  let cursor: string | undefined;
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const result = await listExpensesPage(groupId, PAGE_LIMIT, cursor);
-    for (const expense of result.items) {
-      if (expense.createdAt < sinceIso) return out;
-      out.push(expense);
-    }
-    if (!result.hasMore || !result.nextCursor) break;
-    cursor = result.nextCursor;
-  }
-  return out;
-}
 
 export const listSettlements = cache(async (groupId: string) => {
   const result = await apiRequest<{ settlements: ApiSettlement[] }>(

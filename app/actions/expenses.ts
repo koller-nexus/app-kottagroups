@@ -9,6 +9,9 @@ import { failure, text, type FormState } from "@/lib/form";
 import { parseAmountToCents } from "@/lib/kotta-view";
 import { parseCustomSplit } from "@/lib/split";
 
+// Despesas mudam os saldos, e o sino do shell conta as quitações calculadas a partir deles:
+// por isso as actions daqui invalidam o app inteiro ("/", "layout").
+
 const SPLIT_PREFIX = "split:";
 
 type ExpenseBody = {

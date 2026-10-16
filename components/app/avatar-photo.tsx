@@ -12,6 +12,7 @@ export function AvatarPhoto({ src, fallback }: { src: string; fallback: string }
       src={src}
       alt=""
       loading="lazy"
+      decoding="async"
       referrerPolicy="no-referrer"
       className="size-full object-cover"
       onError={() => setFailed(true)}

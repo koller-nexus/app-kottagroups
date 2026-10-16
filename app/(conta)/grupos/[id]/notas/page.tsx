@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AutoRefresh } from "@/components/app/auto-refresh";
+import { InvoiceStatusWatcher } from "@/components/app/invoice-status-watcher";
 import { InvoiceStatus } from "@/components/app/invoice-status";
 import { Page, SectionLabel } from "@/components/app/page-header";
 import { Price } from "@/components/app/price";
@@ -9,7 +9,7 @@ import { InvoiceUploadForm } from "@/components/forms/invoice-upload-form";
 import { ApiError } from "@/lib/api/errors";
 import { getGroup, getMe, listGroupInvoicesPage } from "@/lib/api/kotta";
 import { formatShortDate } from "@/lib/dates";
-import { isInvoicePending, isInvoiceRead, reaisToCents } from "@/lib/invoices";
+import { isInvoiceRead, pendingInvoiceIds, reaisToCents } from "@/lib/invoices";
 import { localDay } from "@/lib/kotta-view";
 import { displayName, peopleById } from "@/lib/people";
 
@@ -46,7 +46,7 @@ export default async function GrupoNotasPage({ params, searchParams }: PageProps
 
       <section aria-labelledby="notas-do-grupo">
         <SectionLabel id="notas-do-grupo">Notas do grupo</SectionLabel>
-        {page.items.some((invoice) => isInvoicePending(invoice.status)) ? <AutoRefresh /> : null}
+        <InvoiceStatusWatcher ids={pendingInvoiceIds(page.items)} />
         {page.items.length === 0 ? (
           <p className="rounded-card border border-dashed border-kotta-border bg-kotta-surface p-10 text-center text-sm text-kotta-muted">
             {cursor ? "Não há mais notas." : "Nenhuma nota enviada ainda."}

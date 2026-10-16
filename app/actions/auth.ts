@@ -212,6 +212,7 @@ export async function confirmEmailAction(token: string): Promise<ConfirmationOut
   const sessionUser = await signedInUser();
   const outcome = confirmationOutcome({ token, status, sessionUser });
   // O layout logado lê emailConfirmed; revalidar tira o aviso de "confirme seu e-mail".
+  // E-mail confirmado muda o que o shell mostra; invalida o app inteiro.
   if (outcome.state === "success" && outcome.signedIn) revalidatePath("/", "layout");
   return outcome;
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import { headers as requestHeaders } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { ApiError, parseErrorBody } from "@/lib/api/errors";
 import { getSessionToken } from "@/lib/api/session";
@@ -8,6 +9,18 @@ import { confirmEmailUrl, expiredSessionUrl, PATH_HEADER } from "@/lib/session-f
 
 export function apiOrigin(): string {
   return (process.env.API_ORIGIN ?? "https://api.kottagroups.com.br").replace(/\/$/, "");
+}
+
+// Contador de chamadas por request (React.cache vive só durante a renderização).
+const requestStats = cache(() => ({ calls: 0, tag: Math.random().toString(36).slice(2, 8) }));
+
+/** Com API_TIMING_LOG=1, registra request, ordem, rota e duração de cada chamada (sem query, token ou corpo). */
+function logTiming(method: string, path: string, status: number | string, startedAt: number): void {
+  if (process.env.API_TIMING_LOG !== "1") return;
+  const stats = requestStats();
+  stats.calls += 1;
+  const route = path.split("?")[0];
+  console.info(`[api] r${stats.tag} #${stats.calls} ${method} ${route} -> ${status} ${Math.round(performance.now() - startedAt)}ms`);
 }
 
 type JsonBody = Record<string, unknown> | unknown[];
@@ -37,6 +50,7 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   const isForm = body instanceof FormData;
   if (body !== undefined && !isForm) headers.set("Content-Type", "application/json");
 
+  const startedAt = performance.now();
   let response: Response;
   try {
     response = await fetch(`${apiOrigin()}/api/v1${path}`, {
@@ -46,9 +60,12 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
       cache: "no-store",
     });
   } catch (error) {
+    logTiming(method, path, "network-error", startedAt);
     console.error(`[api] ${method} ${path} -> network error`, error instanceof Error ? error.message : error);
     throw new ApiError(503, "NETWORK_ERROR", "Falha de rede ao falar com a API.");
   }
+
+  logTiming(method, path, response.status, startedAt);
 
   if (!response.ok) {
     let parsed: { code: string; message: string } | undefined;

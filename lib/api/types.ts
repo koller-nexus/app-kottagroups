@@ -234,3 +234,13 @@ export interface ApiErrorBody {
   code: string;
   message: string;
 }
+
+/** `GET /me/dashboard`: Painel inteiro numa chamada (meses em America/Sao_Paulo). */
+export interface ApiDashboard {
+  totals: { receivesCents: number; owesCents: number };
+  monthSpend: { currentCents: number; previousCents: number; month: string };
+  groups: { id: string; name: string; emoji: string; netCents: number; membersCount: number }[];
+  /** Mesmas linhas de `GET /notifications?status=all&limit=3`. */
+  recent: ApiNotification[];
+  unpaidCount: number;
+}

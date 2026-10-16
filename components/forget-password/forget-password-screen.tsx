@@ -118,10 +118,10 @@ export function ForgetPasswordScreen() {
             Senha atualizada
           </h1>
           <p className="mt-4 text-base leading-7 text-kotta-muted">
-            Abra o app Kotta Groups e entre com a nova senha.
+            Sua senha foi alterada. Entre com a nova senha.
           </p>
-          <Link href="/" className="primary-action mt-8">
-            Voltar ao início
+          <Link href="/entrar" className="primary-action mt-8">
+            Entrar
           </Link>
         </div>
       )}
@@ -129,7 +129,8 @@ export function ForgetPasswordScreen() {
       {visibleState === "missing" && (
         <MessageState
           title="Link incompleto"
-          description="Este link de recuperação não tem um token válido. Solicite um novo link no app para continuar."
+          description="Este link de recuperação não tem um token válido. Peça um novo link para continuar."
+          action={NEW_LINK_ACTION}
         />
       )}
 
@@ -139,6 +140,7 @@ export function ForgetPasswordScreen() {
           description={
             message ?? "Este link é inválido, expirou ou já foi utilizado."
           }
+          action={NEW_LINK_ACTION}
         />
       )}
 
@@ -163,6 +165,12 @@ export function ForgetPasswordScreen() {
     </div>
   );
 }
+
+const NEW_LINK_ACTION = (
+  <Link href="/esqueci-a-senha" className="primary-action">
+    Pedir um novo link
+  </Link>
+);
 
 function Field({
   id,

@@ -26,7 +26,6 @@ import {
   listSettlements,
 } from "@/lib/api/kotta";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
-import type { ApiGroupDetail } from "@/lib/api/types";
 import { categoryLookup } from "@/lib/categories";
 import { formatLongDay, formatMonthYear } from "@/lib/dates";
 import { groupByMonthAndDay, netFor } from "@/lib/kotta-view";
@@ -39,15 +38,6 @@ const param = (value: string | string[] | undefined) => (typeof value === "strin
 
 const settleButtonClass =
   "min-h-11 text-sm font-semibold text-kotta-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary";
-
-async function loadGroup(id: string): Promise<ApiGroupDetail> {
-  try {
-    return await getGroup(id);
-  } catch (error) {
-    if (error instanceof ApiError && (error.status === 404 || error.status === 403)) notFound();
-    throw error;
-  }
-}
 
 export async function generateMetadata({ params }: PageProps<"/grupos/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -69,7 +59,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
 
   const [me, group, recent, filtered, settlements, categories, groupBalances] = await Promise.all([
     getMe(),
-    loadGroup(id),
+    getGroup(id),
     listExpensesPage(id),
     categoria || cursor ? listExpensesPage(id, undefined, cursor, categoria) : null,
     listSettlements(id),
@@ -79,7 +69,11 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
       if (error instanceof ApiError) return null;
       throw error;
     }),
-  ]);
+    // Qualquer chamada do grupo pode responder 404/403 primeiro; todas viram a 404 do app.
+  ]).catch((error) => {
+    if (error instanceof ApiError && (error.status === 404 || error.status === 403)) notFound();
+    throw error;
+  });
   const expensePage = filtered ?? recent;
   const balances = groupBalances ?? group.balances;
 

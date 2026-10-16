@@ -1,50 +1,57 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState } from "react";
 import { loginAction, type AuthFormState } from "@/app/actions/auth";
 import { Field, FormError } from "@/components/auth/field";
+import { PasswordField } from "@/components/auth/password-field";
+import { formText, useFieldErrors } from "@/components/auth/use-field-errors";
+import { validateLogin } from "@/lib/auth-validation";
 
 const initialState: AuthFormState = {};
 
-export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
-  const [state, formAction, pending] = useActionState(loginAction, initialState);
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
+function validate(form: HTMLFormElement) {
+  return validateLogin({ email: formText(form, "email"), password: formText(form, "password") });
+}
 
-  // Depois de um erro, leva o foco ao campo a corrigir.
-  useEffect(() => {
-    if (!state.error) return;
-    (state.fields?.email ? passwordRef : emailRef).current?.focus();
-  }, [state]);
+export function LoginForm({ next, notice, defaultEmail }: { next?: string; notice?: string; defaultEmail?: string }) {
+  const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const { formRef, formErrorRef, errors, onSubmit, onChange } = useFieldErrors(state, validate);
 
   return (
-    <form action={formAction} className="flex flex-col gap-5" noValidate>
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={onSubmit}
+      onChange={onChange}
+      className="flex flex-col gap-5"
+      noValidate
+    >
       {notice && !state.error ? (
-        <p className="rounded-control bg-kotta-light-green px-4 py-3 text-sm text-kotta-primary">
+        <p role="status" className="rounded-control bg-kotta-light-green px-4 py-3 text-sm text-kotta-primary">
           {notice}
         </p>
       ) : null}
-      <FormError message={state.error} />
+      <FormError ref={formErrorRef} message={state.error} />
       <input type="hidden" name="next" value={next ?? ""} />
       <Field
-        ref={emailRef}
         id="email"
         name="email"
         type="email"
         label="E-mail"
         autoComplete="email"
         required
-        defaultValue={state.fields?.email}
+        defaultValue={state.fields?.email ?? defaultEmail}
+        error={errors.email}
       />
-      <Field
-        ref={passwordRef}
+      <PasswordField
         id="password"
         name="password"
-        type="password"
         label="Senha"
         autoComplete="current-password"
         required
+        autoFocus={Boolean(defaultEmail)}
+        error={errors.password}
       />
       <Link
         href="/esqueci-a-senha"

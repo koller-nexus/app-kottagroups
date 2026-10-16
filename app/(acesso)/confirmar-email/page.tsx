@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ConfirmEmailScreen } from "@/components/confirm-email/confirm-email-screen";
 
-export default function ConfirmEmailPage() {
+export const metadata: Metadata = {
+  title: "Confirmar e-mail — Kotta Groups",
+};
+
+export default function ConfirmarEmailPage() {
   return (
     <Suspense fallback={<ConfirmEmailFallback />}>
       <ConfirmEmailScreen />

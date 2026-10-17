@@ -167,7 +167,7 @@ páginas são validados pelo roteiro manual do `quickstart.md`.
 - [X] T041 [P] Conferir tamanhos (componentes ≤ 200 linhas, funções ≤ 40, aninhamento ≤ 3) em `components/invites/*.tsx` e `app/(acesso)/convite/[token]/page.tsx`; dividir se necessário
 - [X] T042 Rodar `pnpm lint`, `pnpm test` e `pnpm build` e corrigir o que falhar
 - [ ] T043 Executar o roteiro de `specs/019-group-invite-links/quickstart.md` em 375 px e desktop (teclado só, leitor de tela para os anúncios, `prefers-reduced-motion`) e anotar o resultado no PR
-- [ ] T044 [P] Atualizar o status em `specs/019-group-invite-links/spec.md` e marcar os critérios de aceite da issue #27 no PR (com a justificativa do `uqr` na descrição)
+- [X] T044 [P] Atualizar o status em `specs/019-group-invite-links/spec.md` e marcar os critérios de aceite da issue #27 no PR (com a justificativa do `uqr` na descrição)
 
 ---
 

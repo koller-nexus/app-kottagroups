@@ -13,6 +13,7 @@ import { ExpenseRow } from "@/components/app/expense-row";
 import { GardenField } from "@/components/app/garden-field";
 import { GroupInvoicesCard } from "@/components/app/group-invoices-card";
 import { GroupMenu } from "@/components/app/group-menu";
+import { InviteDialog } from "@/components/invites/invite-dialog";
 import { ShoppingListsCard } from "@/components/app/shopping-lists-card";
 import { Price } from "@/components/app/price";
 import { ArrowRightIcon, PlusIcon } from "@/components/app/icons";
@@ -29,7 +30,7 @@ import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { categoryLookup } from "@/lib/categories";
 import { formatLongDay, formatMonthYear } from "@/lib/dates";
 import { groupByMonthAndDay, netFor } from "@/lib/kotta-view";
-import { canDeleteGroup, canSettle } from "@/lib/permissions";
+import { canDeleteGroup, canInviteMembers, canSettle } from "@/lib/permissions";
 import { displayName, peopleById } from "@/lib/people";
 
 type Tab = "despesas" | "saldos";
@@ -56,6 +57,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
   const categoria = param(query.categoria);
   const cursor = param(query.cursor);
   const erro = param(query.erro);
+  const aviso = param(query.aviso);
 
   const [me, group, recent, filtered, settlements, categories, groupBalances] = await Promise.all([
     getMe(),
@@ -129,6 +131,7 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
       }
       actions={
         <>
+          {!group.archived && canInviteMembers(role) ? <InviteDialog groupId={group.id} groupName={group.name} /> : null}
           {group.archived ? null : (
             <Link href={`/despesas/nova?grupo=${group.id}`} className="primary-action">
               <PlusIcon className="size-5" />
@@ -143,6 +146,11 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
         <div>
           <FormError message={friendlyMessage(erro)} />
         </div>
+      ) : null}
+      {aviso === "entrou" || aviso === "ja-membro" ? (
+        <p role="status" className="rounded-control border border-kotta-primary/30 bg-kotta-light-green px-4 py-3 text-sm font-semibold text-kotta-text">
+          {aviso === "entrou" ? `Você entrou em ${group.name}.` : `Você já fazia parte de ${group.name}.`}
+        </p>
       ) : null}
 
       {confirmingDelete ? (

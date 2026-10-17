@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 export function CopyTextButton({
   text,
   label,
   copiedLabel = "Copiado",
+  failedMessage,
 }: {
   text: string;
   label: string;
   copiedLabel?: string;
+  /** Troca o aviso padrão de falha, que repete o texto da chave. */
+  failedMessage?: ReactNode;
 }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -29,7 +32,8 @@ export function CopyTextButton({
       </button>
       <p aria-live="polite" className="text-sm text-kotta-muted">
         {status === "copied" ? copiedLabel : null}
-        {status === "failed" ? (
+        {status === "failed" && failedMessage ? failedMessage : null}
+        {status === "failed" && !failedMessage ? (
           <>
             Não deu para copiar. Sua chave: <span className="font-mono text-kotta-text">{text}</span>
           </>

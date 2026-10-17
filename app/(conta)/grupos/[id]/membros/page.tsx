@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { addMemberAction, promoteMemberAction, removeMemberAction } from "@/app/actions/groups";
 import { FormError } from "@/components/auth/field";
 import { Avatar } from "@/components/app/avatar";
 import { Page, SectionLabel } from "@/components/app/page-header";
+import { InviteDialog } from "@/components/invites/invite-dialog";
+import { InviteList, InviteListSkeleton } from "@/components/invites/invite-list";
 import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { getGroup, getMe, listGroupDetails } from "@/lib/api/kotta";
 import type { ApiMemberRole } from "@/lib/api/types";
-import { canManageGroup, canPromoteMember } from "@/lib/permissions";
+import { canInviteMembers, canManageGroup, canPromoteMember } from "@/lib/permissions";
 
 export const metadata: Metadata = {
   title: "Membros — Kotta Groups",
@@ -20,7 +23,7 @@ const rowButtonClass =
 
 export default async function MembrosPage({ params, searchParams }: PageProps<"/grupos/[id]/membros">) {
   const { id } = await params;
-  const { erro } = await searchParams;
+  const { erro, aviso } = await searchParams;
   const [me, group, myGroups] = await Promise.all([
     getMe(),
     getGroup(id).catch((error) => {
@@ -33,6 +36,7 @@ export default async function MembrosPage({ params, searchParams }: PageProps<"/
   const myRole = group.members.find((m) => m.id === me.id)?.role;
   const manage = canManageGroup(myRole);
   const promote = canPromoteMember(myRole);
+  const invite = canInviteMembers(myRole) && !group.archived;
 
   // Sem busca de usuários na API: dá para adicionar quem está nos seus outros grupos.
   const inGroup = new Set(group.members.map((m) => m.id));
@@ -52,7 +56,13 @@ export default async function MembrosPage({ params, searchParams }: PageProps<"/
       back={{ href: `/grupos/${group.id}`, label: group.name }}
       title="Membros"
       description={`${group.members.length} ${group.members.length === 1 ? "pessoa" : "pessoas"} em ${group.name}`}
+      actions={invite ? <InviteDialog groupId={group.id} groupName={group.name} /> : undefined}
     >
+      {aviso === "convite-revogado" ? (
+        <p role="status" className="rounded-control border border-kotta-border bg-kotta-surface px-4 py-3 text-sm font-semibold text-kotta-text">
+          Convite revogado.
+        </p>
+      ) : null}
       {typeof erro === "string" && erro ? (
         <div>
           <FormError message={friendlyMessage(erro)} />
@@ -98,6 +108,15 @@ export default async function MembrosPage({ params, searchParams }: PageProps<"/
           </li>
         ))}
       </ul>
+
+      {invite ? (
+        <section aria-labelledby="convites">
+          <SectionLabel id="convites">Convites</SectionLabel>
+          <Suspense fallback={<InviteListSkeleton />}>
+            <InviteList groupId={group.id} members={group.members} />
+          </Suspense>
+        </section>
+      ) : null}
 
       {manage ? (
         <section aria-labelledby="adicionar">

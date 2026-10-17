@@ -18,8 +18,17 @@ const NOTICES: Record<string, string> = {
 const SESSION_EXPIRED_MOTIVOS = new Set(["expirada", "envio"]);
 
 /** Login depois de um cadastro cujo login automático falhou: a conta já existe. */
-export function accountCreatedLoginUrl(email: string): string {
-  return `/entrar?${new URLSearchParams({ motivo: "conta-criada", email })}`;
+export function accountCreatedLoginUrl(email: string, next = "/"): string {
+  const params = new URLSearchParams({ motivo: "conta-criada", email });
+  if (next !== "/") params.set("next", next);
+  return `/entrar?${params}`;
+}
+
+/** Login depois de sair pelo botão; `next` (já passado por safeNextPath) leva de volta, ex.: a um convite. */
+export function signedOutLoginUrl(next = "/"): string {
+  const params = new URLSearchParams({ motivo: "saiu" });
+  if (next !== "/") params.set("next", next);
+  return `/entrar?${params}`;
 }
 
 /** "Confirme seu e-mail" mantendo para onde a pessoa ia (já passado por safeNextPath). */

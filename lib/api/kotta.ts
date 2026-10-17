@@ -8,7 +8,9 @@ import type {
   ApiExpense,
   ApiExpenseDetail,
   ApiGroupDetail,
+  ApiGroupInvite,
   ApiGroupSummary,
+  ApiInvitePreview,
   ApiInvoice,
   ApiNotification,
   ApiSettlement,
@@ -18,6 +20,7 @@ import type {
   ApiUser,
   CursorPage,
 } from "@/lib/api/types";
+import { INVITE_LIST_LIMIT } from "@/lib/invites";
 
 const PAGE_LIMIT = 100;
 // Teto de páginas por varredura, para não prender a renderização.
@@ -144,4 +147,16 @@ export const listGroupInvoicesPage = cache((groupId: string, cursor?: string, li
 
 export const getInvoice = cache((id: string) =>
   apiRequest<ApiInvoice>(`/invoices/${encodeURIComponent(id)}`),
+);
+
+/** Prévia pública do convite (sem sessão). O token vai no corpo, nunca na URL da API. */
+export const previewInvite = cache((token: string) =>
+  apiRequest<ApiInvitePreview>("/invites/preview", { method: "POST", auth: false, body: { token } }),
+);
+
+/** Primeira página dos convites do grupo (dono/admin), mais recentes primeiro. */
+export const listGroupInvites = cache((groupId: string) =>
+  apiRequest<CursorPage<ApiGroupInvite>>(
+    withQuery(`/groups/${encodeURIComponent(groupId)}/invites`, { limit: INVITE_LIST_LIMIT }),
+  ),
 );

@@ -13,7 +13,7 @@ import { failure, type FormState } from "@/lib/form";
 import { PRIVACY_VERSION, TERMS_VERSION } from "@/lib/legal";
 import { safeNextPath } from "@/lib/safe-next";
 import { isSessionExpired } from "@/lib/session-expiry";
-import { accountCreatedLoginUrl, confirmEmailUrl } from "@/lib/session-flow";
+import { accountCreatedLoginUrl, confirmEmailUrl, signedOutLoginUrl } from "@/lib/session-flow";
 
 export interface AuthFormState {
   /** Erro geral, no topo do formulário. */
@@ -94,6 +94,7 @@ export async function registerAction(_prev: AuthFormState, formData: FormData): 
   const pixKey = text(formData, "pixKey");
   const password = rawText(formData, "password");
   const acceptTerms = formData.get("acceptTerms") === "on";
+  const next = safeNextPath(formData.get("next"));
   const fields = { name, email, pixKey, acceptTerms };
 
   const fieldErrors = validateRegistration({ name, email, password, pixKey, acceptTerms });
@@ -128,13 +129,14 @@ export async function registerAction(_prev: AuthFormState, formData: FormData): 
     if (!(error instanceof ApiError)) throw error;
     signedIn = false;
   }
-  redirect(signedIn ? "/confirme-seu-email" : accountCreatedLoginUrl(email));
+  redirect(signedIn ? confirmEmailUrl(next) : accountCreatedLoginUrl(email, next));
 }
 
 /** Logout por formulário. `destino=cadastrar` serve para corrigir um e-mail digitado errado. */
 export async function logoutAction(formData?: FormData): Promise<void> {
   await clearSessionToken();
-  redirect(formData?.get("destino") === "cadastrar" ? "/cadastrar" : "/entrar?motivo=saiu");
+  if (formData?.get("destino") === "cadastrar") redirect("/cadastrar");
+  redirect(signedOutLoginUrl(safeNextPath(formData?.get("next"))));
 }
 
 export interface ResendState {

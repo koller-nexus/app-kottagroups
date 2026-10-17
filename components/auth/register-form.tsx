@@ -10,6 +10,11 @@ import { isPasswordLengthOk, validateRegistration } from "@/lib/auth-validation"
 
 const initialState: AuthFormState = {};
 
+/** Mantém para onde a pessoa ia (ex.: um convite) ao trocar entre criar conta e entrar. */
+export function withNext(path: string, next: string): string {
+  return next === "/" ? path : `${path}?${new URLSearchParams({ next })}`;
+}
+
 const LINK_CLASS = "font-semibold text-kotta-primary underline underline-offset-2";
 
 function validate(form: HTMLFormElement) {
@@ -22,7 +27,7 @@ function validate(form: HTMLFormElement) {
   });
 }
 
-export function RegisterForm() {
+export function RegisterForm({ next = "/" }: { next?: string }) {
   const [state, formAction, pending] = useActionState(registerAction, initialState);
   const { formRef, formErrorRef, errors, onSubmit, onChange } = useFieldErrors(state, validate);
   const [password, setPassword] = useState("");
@@ -44,6 +49,7 @@ export function RegisterForm() {
       noValidate
     >
       <FormError ref={formErrorRef} message={state.error} />
+      <input type="hidden" name="next" value={next} />
       <Field
         id="name"
         name="name"
@@ -120,7 +126,7 @@ export function RegisterForm() {
       </button>
       <p className="text-center text-sm text-kotta-muted">
         Já tem conta?{" "}
-        <Link href="/entrar" className="font-semibold text-kotta-primary hover:underline">
+        <Link href={withNext("/entrar", next)} className="font-semibold text-kotta-primary hover:underline">
           Entrar
         </Link>
       </p>

@@ -244,3 +244,42 @@ export interface ApiDashboard {
   recent: ApiNotification[];
   unpaidCount: number;
 }
+
+export type ApiInviteStatus = "active" | "expired" | "revoked" | "exhausted";
+
+/** Visão de admin de `GET /groups/{id}/invites`; nunca traz o token. */
+export interface ApiGroupInvite {
+  id: string;
+  groupId: string;
+  /** Id de quem criou. */
+  createdBy: string;
+  email: string | null;
+  maxUses: number;
+  uses: number;
+  expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
+  status: ApiInviteStatus;
+}
+
+/** `POST /groups/{id}/invites`: o link com o token só volta aqui, uma vez. */
+export interface ApiGroupInviteCreated {
+  invite: ApiGroupInvite;
+  token: string;
+  url: string;
+  /** false sem e-mail ou quando o envio falhou. */
+  emailSent: boolean;
+}
+
+/** `POST /invites/preview`, público. */
+export interface ApiInvitePreview {
+  group: { name: string; emoji: string };
+  inviterName: string;
+  expiresAt: string;
+}
+
+/** `POST /invites/accept`; `joined=false` quando já era membro. */
+export interface ApiInviteAccepted {
+  groupId: string;
+  joined: boolean;
+}

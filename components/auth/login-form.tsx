@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { withNext } from "@/components/auth/register-form";
 import { useActionState } from "react";
 import { loginAction, type AuthFormState } from "@/app/actions/auth";
 import { Field, FormError } from "@/components/auth/field";
@@ -64,7 +65,7 @@ export function LoginForm({ next, notice, defaultEmail }: { next?: string; notic
       </button>
       <p className="text-center text-sm text-kotta-muted">
         Ainda não tem conta?{" "}
-        <Link href="/cadastrar" className="font-semibold text-kotta-primary hover:underline">
+        <Link href={withNext("/cadastrar", next ?? "/")} className="font-semibold text-kotta-primary hover:underline">
           Criar conta
         </Link>
       </p>

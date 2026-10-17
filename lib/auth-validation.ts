@@ -9,7 +9,7 @@ export interface RegistrationInput {
   acceptTerms: boolean;
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PASSWORD_MIN_CHARS = 8;
 // A API mede o máximo em bytes (limite do bcrypt), não em caracteres.

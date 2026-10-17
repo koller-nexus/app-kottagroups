@@ -58,6 +58,10 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
       return RATE_LIMITED_MESSAGE;
     case "EMAIL_NOT_CONFIRMED":
       return "Confirme seu e-mail para continuar.";
+    case "INVITE_INVALID":
+      return "Este convite não vale mais. Peça um novo link a quem convidou.";
+    case "INVITE_EMAIL_MISMATCH":
+      return "Este convite foi enviado para outro e-mail.";
     case "INVALID_TOKEN":
       return "Este link não é mais válido. Peça um novo.";
     case "VALIDATION_FAILED":

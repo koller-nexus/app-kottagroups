@@ -14,6 +14,9 @@ export function canDeleteGroup(role: ApiMemberRole | undefined): boolean {
 
 export const canPromoteMember = canDeleteGroup;
 
+/** Convidar por link ou e-mail: dono ou admin. */
+export const canInviteMembers = canDeleteGroup;
+
 /** Editar ou excluir despesa: quem criou ou o dono do grupo. */
 export function canEditExpense(meId: string, createdByUserId: string, role: ApiMemberRole | undefined): boolean {
   return meId === createdByUserId || role === "owner";

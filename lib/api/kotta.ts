@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { ApiError } from "@/lib/api/errors";
-import { apiOrigin, apiRequest, withQuery } from "@/lib/api/server";
+import { apiRequest, withQuery } from "@/lib/api/server";
 import type {
   ApiCategory,
   ApiDashboard,
@@ -28,11 +28,7 @@ const MAX_PAGES = 10;
 // Limite da API para `/groups` com `include`.
 const GROUP_DETAILS_PAGE_LIMIT = 50;
 
-export const getMe = cache(async () => {
-  const me = await apiRequest<ApiUser>("/users/me");
-  // Sem base URL configurada, a API devolve o link da foto relativo a ela, não à web.
-  return me.avatarUrl ? { ...me, avatarUrl: new URL(me.avatarUrl, apiOrigin()).toString() } : me;
-});
+export const getMe = cache(() => apiRequest<ApiUser>("/users/me"));
 
 export const listGroups = cache(async (archived = false): Promise<ApiGroupSummary[]> => {
   const all: ApiGroupSummary[] = [];

@@ -48,13 +48,18 @@ const PNG = Buffer.from(
 
 test("trocar foto envia a imagem e mostra a foto nova no resumo", async ({ page }) => {
   await page.goto("/perfil");
+  const photo = page.getByRole("region", { name: "Resumo da conta" }).locator("img");
+  const before = (await photo.count()) > 0 ? await photo.getAttribute("src") : null;
   const picker = page.getByLabel("Alterar foto de perfil");
   await expect(picker).toBeEnabled(); // habilita depois da hidratação
   await picker.setInputFiles({ name: "foto.png", mimeType: "image/png", buffer: PNG });
 
   await expect(page.getByText("Foto atualizada.")).toBeVisible({ timeout: 10_000 });
-  const photo = page.getByRole("region", { name: "Resumo da conta" }).locator("img");
-  await expect(photo).toHaveAttribute("src", /avatar/);
+  // URL fixa da API, sem query string; cada upload gera uma nova.
+  await expect(photo).toHaveAttribute("src", /\/api\/v1\/avatars\/[0-9A-Z]{26}\/[0-9A-Z]{26}\.(jpg|png|webp)$/);
+  const after = await photo.getAttribute("src");
+  expect(after).not.toBe(before);
+  await expect(page.locator('aside a[href="/perfil"] img')).toHaveAttribute("src", after ?? "");
   await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
 });
 

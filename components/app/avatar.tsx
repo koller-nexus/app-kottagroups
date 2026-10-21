@@ -5,7 +5,7 @@ import { colorIndexFor } from "@/lib/kotta-view";
 export interface AvatarPerson {
   id: string;
   name: string;
-  /** Link assinado e temporário; vem sempre da resposta mais recente da API. */
+  /** URL fixa da foto, usada como veio da API; muda a cada upload, então pode ficar em cache. */
   avatarUrl?: string | null;
 }
 

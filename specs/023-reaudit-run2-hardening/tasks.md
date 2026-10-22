@@ -50,7 +50,7 @@ feitas em qualquer ordem.
 - [X] T002 [US1] Na branch `feature/023-next-16-3-8`, mudar `next` e `eslint-config-next` de `16.3.5` para `16.3.8` (versão exata, sem `^`) em `package.json` e rodar `pnpm install` para atualizar `pnpm-lock.yaml` (research R1, FR-002)
 - [X] T003 [US1] Rodar `pnpm audit --prod`. Se `sharp` continuar abaixo de `0.35.5` ou `source-map-js` abaixo de `1.2.2`, rodar `pnpm update sharp source-map-js` e auditar de novo. Só se ainda houver alerta, acrescentar em `package.json` `"pnpm": { "overrides": { "sharp": ">=0.35.5", "source-map-js": ">=1.2.2" } }`, só com o pacote que continua acusando, e rodar `pnpm install`. Parar quando o audit mostrar 0 critical e 0 high (FR-001). Depois de T002
 - [X] T004 [US1] Ler as notas de versão do Next 16.3.6, 16.3.7 e 16.3.8 e conferir se alguma mudança afeta `next.config.ts`, `proxy.ts`, `app/sair/route.ts` ou o uso de `next/image`. Ajustar o código só se uma nota obrigar, e registrar a conclusão na descrição do PR (Edge Case "atualização do framework")
-- [ ] T005 [US1] Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e`, todos verdes sem mudar expectativas (FR-003, SC-007). Abrir PR `fix(deps): bump next to 16.3.8` com `Closes #67` e a saída do audit antes e depois
+- [X] T005 [US1] Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e`, todos verdes sem mudar expectativas (FR-003, SC-007). Abrir PR `fix(deps): bump next to 16.3.8` com `Closes #67` e a saída do audit antes e depois
 
 **Checkpoint**: SC-001 atendido; o app se comporta igual.
 
@@ -74,7 +74,7 @@ local depender da API.
 ### Implementation for User Story 2
 
 - [X] T010 [US2] Em `app/actions/auth.ts`, criar a constante de módulo `const LOGOUT_TIMEOUT_MS = 3_000;`. Em `logoutAction`, antes de `clearSessionToken()`: `const token = await getSessionToken();` e, se houver token, `await apiRequest<void>("/auth/logout", { method: "POST", auth: false, headers: { Authorization: \`Bearer ${token}\` }, signal: AbortSignal.timeout(LOGOUT_TIMEOUT_MS) }).catch(() => {});`. O comentário explica o porquê: `auth: false` evita que o 401 de sessão já expirada redirecione para a tela de sessão expirada; a falha é ignorada porque a saída local sempre acontece e `apiRequest` já registra o erro no log. O resto (`destino === "cadastrar"`, `signedOutLoginUrl(safeNextPath(...))`) não muda, nem `app/sair/route.ts` (research R2, FR-004–FR-006). Depois de T008
-- [ ] T011 [US2] Rodar `pnpm lint`, `pnpm test` e `pnpm test:e2e`: T008 passa e toda a suíte continua verde depois dos testes de saída (SC-002, SC-007). Fazer o quickstart §4.6 (API parada → "Sair" leva a `/entrar?motivo=saiu` em até ~3 s, SC-003). Abrir PR `fix(auth): revoke the API session on logout` com `Closes #66`
+- [X] T011 [US2] Rodar `pnpm lint`, `pnpm test` e `pnpm test:e2e`: T008 passa e toda a suíte continua verde depois dos testes de saída (SC-002, SC-007). Fazer o quickstart §4.6 (API parada → "Sair" leva a `/entrar?motivo=saiu` em até ~3 s, SC-003). Abrir PR `fix(auth): revoke the API session on logout` com `Closes #66`
 
 **Checkpoint**: token copiado antes de sair não vale mais; a saída nunca trava.
 
@@ -99,7 +99,7 @@ telas com token (#65).
 - [X] T016 [P] [US3] Em `components/confirm-email/confirm-email-screen.tsx`, mesmo tratamento: `const searchParams = useSearchParams();`, `const [token] = useState(() => searchParams.get("token")?.trim() ?? "");`, um `useEffect` de limpeza com `replaceState` igual ao de T015, separado do efeito de `confirmOnce`. `confirmOnce` e as deps `[attempt, token]` não mudam (research R5, FR-008)
 - [X] T017 [P] [US3] Em `app/(acesso)/redefinir-senha/page.tsx`, acrescentar `referrer: "no-referrer"` ao `metadata` (research R6, FR-009)
 - [X] T018 [P] [US3] Em `app/(acesso)/confirmar-email/page.tsx`, acrescentar `referrer: "no-referrer"` ao `metadata` (research R6, FR-009)
-- [ ] T019 [US3] Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e`. Fazer o quickstart §4.3 (barra sem token, troca de senha funciona, recarregar mostra "link sem token") e §4.4 (`<meta name="referrer" content="no-referrer">` no HTML). Abrir PR `fix(security): keep invite and account tokens out of URLs` com `Closes #65`
+- [X] T019 [US3] Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e`. Fazer o quickstart §4.3 (barra sem token, troca de senha funciona, recarregar mostra "link sem token") e §4.4 (`<meta name="referrer" content="no-referrer">` no HTML). Abrir PR `fix(security): keep invite and account tokens out of URLs` com `Closes #65`
 
 **Checkpoint**: SC-004; os fluxos de convite, redefinição e confirmação funcionam como antes.
 
@@ -118,7 +118,7 @@ telas com token (#65).
 ### Implementation for User Story 4
 
 - [X] T021 [US4] Em `next.config.ts`, criar `const SECURITY_HEADERS = [...]` com os 5 pares `{ key, value }` exatamente como em `contracts/security-headers.md` (`Content-Security-Policy: frame-ancestors 'none'`, `X-Frame-Options: DENY`, `Strict-Transport-Security: max-age=63072000; includeSubDomains`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`) e acrescentar `async headers() { return [{ source: "/:path*", headers: SECURITY_HEADERS }]; }`. Comentário curto do porquê: hoje o framing só é barrado pelo `SameSite=Lax`, `preload` fica de fora por ser difícil de desfazer e a CSP completa fica para outra entrega (research R7). Depois de T020
-- [ ] T022 [US4] Rodar `pnpm lint`, `pnpm build` e `pnpm test:e2e` (T020 passa e o resto continua verde). Fazer o quickstart §4.1 (iframe local bloqueado) e conferir de olho entrar, grupos, nota com foto e convite. Abrir PR `feat(security): send security headers on every response` com `Closes #64`
+- [X] T022 [US4] Rodar `pnpm lint`, `pnpm build` e `pnpm test:e2e` (T020 passa e o resto continua verde). Fazer o quickstart §4.1 (iframe local bloqueado) e conferir de olho entrar, grupos, nota com foto e convite. Abrir PR `feat(security): send security headers on every response` com `Closes #64`
 
 **Checkpoint**: SC-005; nada quebrou com os cabeçalhos.
 
@@ -142,7 +142,7 @@ telas com token (#65).
 - [X] T027 [P] [US5] Em `components/app/invoice-photo.tsx`, trocar `const url = file.url;` por `const url = httpsUrl(file.url);` (import de `@/lib/https-url`). Sem URL, já aparece "Não foi possível carregar a foto." sem link (FR-015). Depois de T026
 - [X] T028 [P] [US5] Em `components/app/avatar.tsx`, em `Avatar`, calcular `const avatarUrl = httpsUrl(person.avatarUrl);` e usar `avatarUrl` na condição, no `key` e no `src` de `AvatarPhoto`. Sem URL válida, aparecem as iniciais. `components/app/avatar-photo.tsx` não muda (FR-015). Depois de T026
 - [X] T029 [P] [US5] Em `app/(conta)/grupos/[id]/listas/[listId]/page.tsx`, em `ReceiptPreview`, calcular `const fileUrl = httpsUrl(file.url);` e trocar os quatro `file.url` (condição da imagem, `href`, `src` e condição/`href` de "Abrir nota fiscal") por `fileUrl`. Sem URL válida, fica no ramo já existente sem link (FR-015). Depois de T026
-- [ ] T030 [US5] Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e`. Os e2e de foto (`e2e/profile.spec.ts` "trocar foto…", `e2e/notes-notifications.spec.ts` "foto enviada…") precisam passar: eles comprovam a exceção de loopback. Fazer o quickstart §4.5. Abrir PR `fix(security): show only known error codes and safe image URLs` com `Closes #68`
+- [X] T030 [US5] Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e`. Os e2e de foto (`e2e/profile.spec.ts` "trocar foto…", `e2e/notes-notifications.spec.ts` "foto enviada…") precisam passar: eles comprovam a exceção de loopback. Fazer o quickstart §4.5. Abrir PR `fix(security): show only known error codes and safe image URLs` com `Closes #68`
 
 **Checkpoint**: SC-006; mensagens e fotos legítimas aparecem como antes.
 

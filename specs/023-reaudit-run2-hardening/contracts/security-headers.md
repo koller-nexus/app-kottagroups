@@ -16,13 +16,12 @@ Cobertura mínima conferida no e2e:
 |--------|---------|
 | Página | `GET /entrar` |
 | Arquivo de `/public` | `GET /kotta-icon.png` |
-| Proxy da API | `GET /api/v1/users/me` (o status não importa, só os cabeçalhos) |
 
-**Proxy da API**: os cabeçalhos da resposta da API sobrescrevem os do app. Em 2026-10-21 a API local
-mandava `content-security-policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'`,
-`strict-transport-security: max-age=15552000; includeSubDomains` e os outros três iguais. No
-proxy, o e2e exige só que os cinco existam, `frame-ancestors 'none'` e `X-Frame-Options: DENY`.
-Subir o HSTS da API para 2 anos é com o repositório da API.
+**Proxy da API (`/api/v1/*`) fica fora deste contrato**: é uma rewrite externa, e o Next devolve só
+os cabeçalhos da resposta da API, sem aplicar os de `headers()`. Eles mudam com o ambiente da API.
+A API local de 2026-10-21 mandava CSP `default-src 'none'; frame-ancestors 'none'; base-uri 'none'`,
+HSTS de 180 dias e os outros três; a do CI (`APP_ENV=dev`) não manda HSTS. Esses cabeçalhos são
+responsabilidade do repositório da API, e o e2e deste repo não os confere.
 
 Páginas com `metadata.referrer = "no-referrer"` (`/convite/[token]`, `/redefinir-senha`,
 `/confirmar-email`) continuam sem Referer, porque a `<meta>` vale mais que o cabeçalho no

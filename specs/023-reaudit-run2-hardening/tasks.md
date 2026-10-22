@@ -165,8 +165,9 @@ telas com token (#65).
 - T004: 16.3.6 só corrige GHSA-vcvr-r3jv-pc5j; 16.3.7, uma correção do turbo-tasks; 16.3.8, só
   advisories de segurança. Nada a ajustar.
 - T020/T021: confirmado com `curl` num `pnpm start` local. Páginas e `/public` trazem os 5
-  cabeçalhos exatos. No proxy `/api/v1`, valem os da API (CSP mais restrita, HSTS de 180 dias), por
-  isso o teste do proxy só confere presença e bloqueio de frame (contrato atualizado).
+  cabeçalhos exatos. No proxy `/api/v1`, o Next devolve só os cabeçalhos da API, e no CI
+  (`APP_ENV=dev`) ela não manda HSTS: o teste do proxy falhou no #76 e foi removido. Esses
+  cabeçalhos ficam com o repositório da API (contrato atualizado).
 - T015/T016: a checagem no navegador não rodou (nenhum navegador do Playwright instalado); falta o
   quickstart §4.3.
 - Pendentes: e2e, verificações manuais do quickstart e abertura dos PRs (T005, T011, T019, T022,

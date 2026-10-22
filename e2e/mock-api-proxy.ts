@@ -30,6 +30,19 @@ const RETRY_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)\/receipt\/retry$/;
 const LIST_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)$/;
 const CONTROL_PATH = /^\/__mock\/receipt\/([^/]+)$/;
 
+/** Arquivos das notas simuladas, servidos por http://localhost como a API de desenvolvimento faz. */
+const MOCK_FILES: Record<string, { type: string; bytes: Buffer }> = {
+  "/__mock/files/pixel.png": {
+    type: "image/png",
+    bytes: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+      "base64",
+    ),
+  },
+  // Bytes que nenhum navegador decodifica, como um TIFF.
+  "/__mock/files/photo.tiff": { type: "image/tiff", bytes: Buffer.from([0, 0, 0, 0]) },
+};
+
 function send(res: import("node:http").ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
@@ -43,6 +56,12 @@ createServer(async (req, res) => {
   const body = Buffer.concat(chunks);
 
   if (url.pathname === "/__mock/health") return send(res, 200, { ok: true });
+
+  const file = MOCK_FILES[url.pathname];
+  if (file) {
+    res.writeHead(200, { "content-type": file.type });
+    return res.end(file.bytes);
+  }
 
   if (url.pathname === "/__mock/fail") {
     if (method === "PUT") {

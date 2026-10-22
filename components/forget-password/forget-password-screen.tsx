@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   getPasswordValidationMessage,
   isUsableResetToken,
@@ -14,7 +14,8 @@ type ScreenState = "form" | "missing" | RecoveryState;
 
 export function ForgetPasswordScreen() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token")?.trim() ?? "";
+  // Guardado em estado: replaceState sincroniza useSearchParams e o token sumiria da tela.
+  const [token] = useState(() => searchParams.get("token")?.trim() ?? "");
   const [state, setState] = useState<ScreenState>(
     isUsableResetToken(token) ? "form" : "missing",
   );
@@ -24,6 +25,11 @@ export function ForgetPasswordScreen() {
   const [message, setMessage] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const visibleState: ScreenState = isUsableResetToken(token) ? state : "missing";
+
+  // Tira o token da barra e do histórico assim que ele foi lido.
+  useEffect(() => {
+    if (token) window.history.replaceState(null, "", window.location.pathname);
+  }, [token]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -4,6 +4,7 @@ import { ConfirmEmailScreen } from "@/components/confirm-email/confirm-email-scr
 
 export const metadata: Metadata = {
   title: "Confirmar e-mail — Kotta Groups",
+  referrer: "no-referrer",
 };
 
 export default function ConfirmarEmailPage() {

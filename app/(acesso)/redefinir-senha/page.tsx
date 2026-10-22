@@ -4,6 +4,7 @@ import { ForgetPasswordScreen } from "@/components/forget-password/forget-passwo
 
 export const metadata: Metadata = {
   title: "Redefinir senha — Kotta Groups",
+  referrer: "no-referrer",
 };
 
 export default function ForgetPasswordPage() {

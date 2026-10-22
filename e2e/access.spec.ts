@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { runId } from "./run-id";
+import { signIn } from "./sign-in";
 
 // Successful sign-in is covered by auth.setup.ts.
 test.describe("sem sessão", () => {
@@ -52,12 +53,31 @@ test.describe("sem sessão", () => {
   });
 });
 
-test("sair encerra a sessão", async ({ page }) => {
-  // Logout only clears this context's cookie, so the shared session file stays valid.
-  await page.goto("/");
-  await page.getByRole("button", { name: "Sair" }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=saiu/);
+// Logout revokes the session in the API, so these tests sign in on their own instead of
+// spending the shared session the other tests depend on.
+test.describe("sair", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
-  await page.goto("/grupos");
-  await expect(page).toHaveURL(/\/entrar/);
+  test("sair encerra a sessão", async ({ page }) => {
+    await signIn(page);
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page).toHaveURL(/\/entrar\?motivo=saiu/);
+
+    await page.goto("/grupos");
+    await expect(page).toHaveURL(/\/entrar/);
+  });
+
+  test("sair revoga a sessão na API", async ({ page }) => {
+    await signIn(page);
+    const token = (await page.context().cookies()).find((cookie) => cookie.name === "kotta_session")?.value;
+    expect(token).toBeTruthy();
+
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page).toHaveURL(/\/entrar\?motivo=saiu/);
+
+    const response = await fetch(`${process.env.API_ORIGIN}/api/v1/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(response.status).toBe(401);
+  });
 });

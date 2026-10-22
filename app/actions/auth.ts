@@ -24,6 +24,8 @@ export interface AuthFormState {
 
 /** A API limita o reenvio do link de confirmação a 1 a cada 60 s. */
 const RESEND_INTERVAL_SECONDS = 60;
+/** Quanto a saída espera a API revogar a sessão antes de seguir sem ela. */
+const LOGOUT_TIMEOUT_MS = 3_000;
 
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -134,6 +136,18 @@ export async function registerAction(_prev: AuthFormState, formData: FormData): 
 
 /** Logout por formulário. `destino=cadastrar` serve para corrigir um e-mail digitado errado. */
 export async function logoutAction(formData?: FormData): Promise<void> {
+  const token = await getSessionToken();
+  if (token) {
+    // Revoga a sessão na API para um token copiado não valer mais. `auth: false` evita que o 401
+    // de uma sessão já expirada redirecione para /sessao-expirada; a falha é ignorada porque a
+    // saída local acontece de qualquer jeito, e apiRequest já registra o erro no log.
+    await apiRequest<void>("/auth/logout", {
+      method: "POST",
+      auth: false,
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(LOGOUT_TIMEOUT_MS),
+    }).catch(() => {});
+  }
   await clearSessionToken();
   if (formData?.get("destino") === "cadastrar") redirect("/cadastrar");
   redirect(signedOutLoginUrl(safeNextPath(formData?.get("next"))));

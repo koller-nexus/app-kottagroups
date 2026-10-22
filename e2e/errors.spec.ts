@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
+import { signIn } from "./sign-in";
 
 const SESSION_COOKIE = "kotta_session";
 const NO_SESSION = { cookies: [], origins: [] };
@@ -63,14 +64,19 @@ test.describe("página não encontrada", () => {
   });
 });
 
-test("sair numa aba desloga a outra", async ({ context }) => {
-  // Logout only clears this context's cookie, so the shared session file stays valid.
-  const pageA = await context.newPage();
-  const pageB = await context.newPage();
-  await pageA.goto("/grupos");
-  await pageB.goto("/perfil");
+// Logout revokes the session in the API: sign in here instead of spending the shared session.
+test.describe("sair em várias abas", () => {
+  test.use({ storageState: NO_SESSION });
 
-  await pageA.getByRole("button", { name: "Sair" }).click();
+  test("sair numa aba desloga a outra", async ({ context }) => {
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+    await signIn(pageA);
+    await pageA.goto("/grupos");
+    await pageB.goto("/perfil");
 
-  await expect(pageB).toHaveURL(/\/entrar\?motivo=saiu/, { timeout: 5_000 });
+    await pageA.getByRole("button", { name: "Sair" }).click();
+
+    await expect(pageB).toHaveURL(/\/entrar\?motivo=saiu/, { timeout: 5_000 });
+  });
 });

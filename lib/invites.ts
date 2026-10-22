@@ -34,9 +34,9 @@ export function inviteReturnPath(token: string): string {
   return `/convite/${encodeURIComponent(token)}`;
 }
 
-/** Tira o segredo da URL antes de mandar para analytics. */
-export function redactInviteUrl(url: string): string {
-  return url.replace(/\/convite\/.*/, "/convite/[token]");
+/** Tira query, hash e o token do convite antes de mandar para analytics. */
+export function redactAnalyticsUrl(url: string): string {
+  return url.split(/[?#]/, 1)[0].replace(/\/convite\/.*/, "/convite/[token]");
 }
 
 /** "24 de out., 14:30" no horário de Brasília. */

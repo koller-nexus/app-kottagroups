@@ -26,9 +26,16 @@ function confirmOnce(token: string, attempt: number): Promise<ConfirmationOutcom
 }
 
 export function ConfirmEmailScreen() {
-  const token = useSearchParams().get("token")?.trim() ?? "";
+  const searchParams = useSearchParams();
+  // Guardado em estado: replaceState sincroniza useSearchParams e o token sumiria da tela.
+  const [token] = useState(() => searchParams.get("token")?.trim() ?? "");
   const [outcome, setOutcome] = useState<ConfirmationOutcome>();
   const [attempt, setAttempt] = useState(0);
+
+  // Tira o token da barra e do histórico assim que ele foi lido.
+  useEffect(() => {
+    if (token) window.history.replaceState(null, "", window.location.pathname);
+  }, [token]);
 
   useEffect(() => {
     let active = true;

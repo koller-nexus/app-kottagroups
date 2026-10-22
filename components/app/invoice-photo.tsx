@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import type { ApiReceiptFile } from "@/lib/api/types";
+import { httpsUrl } from "@/lib/https-url";
 
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary";
 
 /** Foto enviada, para conferir a leitura. Clicar abre o original numa nova aba. */
 export function InvoicePhoto({ file, name }: { file: ApiReceiptFile; name: string }) {
   const [failed, setFailed] = useState(false);
-  const url = file.url;
+  const url = httpsUrl(file.url);
 
   if (!url || failed) {
     return (

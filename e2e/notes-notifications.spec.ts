@@ -7,9 +7,9 @@ const MOCK_ORIGIN = `http://localhost:${MOCK_API_PORT}`;
 
 const RECEIPT = path.join(__dirname, "..", "tests", "fixtures", "receipts", "sem-qr.jpg");
 
-// PNG 1x1 inline: a simulação da nota não precisa servir arquivo.
-const PIXEL_PNG =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+// Servidos pelo proxy de mock por http://localhost: o app só mostra arquivo https: ou de loopback.
+const PIXEL_PNG = `${MOCK_ORIGIN}/__mock/files/pixel.png`;
+const BROKEN_TIFF = `${MOCK_ORIGIN}/__mock/files/photo.tiff`;
 
 async function setInvoice(invoiceId: string, override: Record<string, unknown>) {
   const response = await fetch(`${MOCK_ORIGIN}/__mock/invoice/${invoiceId}`, {
@@ -135,7 +135,7 @@ test.describe("notas do grupo", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 
     // TIFF (ou link vencido) não renderiza: aviso no lugar, com o arquivo ainda acessível.
-    await setInvoice(invoiceId, { file: { contentType: "image/tiff", sizeBytes: 4, url: "data:image/tiff;base64,AAAA" } });
+    await setInvoice(invoiceId, { file: { contentType: "image/tiff", sizeBytes: 4, url: BROKEN_TIFF } });
     await page.goto(notePath);
     await expect(photo.getByText("Não foi possível carregar a foto.")).toBeVisible();
     await expect(photo.getByRole("link", { name: "Abrir foto" })).toBeVisible();

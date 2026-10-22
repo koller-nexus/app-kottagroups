@@ -17,6 +17,7 @@ import { getGroup, getReceiptOrNull, getShoppingList } from "@/lib/api/kotta";
 import { ApiError } from "@/lib/api/errors";
 import type { ApiReceiptSummary, ApiShoppingItem, ApiShoppingReceipt } from "@/lib/api/types";
 import { formatShortDate } from "@/lib/dates";
+import { httpsUrl } from "@/lib/https-url";
 import { invoiceErrorMessage } from "@/lib/invoices";
 import { formatBRL } from "@/lib/money";
 import { awaitingMatches, canRetryReceipt, isReceiptProcessed, itemMatchState, matchSummary, matchSummaryLabel } from "@/lib/receipt";
@@ -204,12 +205,13 @@ function ReceiptPreview({ receipt }: { receipt: ApiReceiptSummary }) {
   const file = receipt.file;
   if (!file) return null;
   const isImage = file.contentType.startsWith("image/");
+  const fileUrl = httpsUrl(file.url);
   const kind = isImage ? `Imagem ${file.contentType.slice(6).toUpperCase()}` : "PDF";
   return (
     <div className="flex flex-col gap-3">
-      {isImage && file.url ? (
+      {isImage && fileUrl ? (
         <a
-          href={file.url}
+          href={fileUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="block overflow-hidden rounded-control border border-kotta-border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kotta-primary"
@@ -217,7 +219,7 @@ function ReceiptPreview({ receipt }: { receipt: ApiReceiptSummary }) {
           {/* URL assinada e temporária do armazenamento: next/image não ajuda aqui. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={file.url}
+            src={fileUrl}
             alt="Nota fiscal da lista"
             loading="lazy"
             decoding="async"
@@ -228,9 +230,9 @@ function ReceiptPreview({ receipt }: { receipt: ApiReceiptSummary }) {
       <p className="text-sm text-kotta-text">
         {kind} · {formatFileSize(file.sizeBytes)} · enviada em {formatShortDate(receipt.uploadedAt.slice(0, 10))}
       </p>
-      {file.url ? (
+      {fileUrl ? (
         <a
-          href={file.url}
+          href={fileUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={`text-kotta-primary ${linkClass}`}

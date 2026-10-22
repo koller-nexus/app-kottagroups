@@ -1,4 +1,5 @@
 import { AvatarPhoto } from "@/components/app/avatar-photo";
+import { httpsUrl } from "@/lib/https-url";
 import { avatarColors } from "@/lib/theme";
 import { colorIndexFor } from "@/lib/kotta-view";
 
@@ -31,14 +32,15 @@ export function initials(name: string): string {
 
 export function Avatar({ person, size = "md", className = "" }: AvatarProps) {
   const color = avatarColors[colorIndexFor(person.id, avatarColors.length)];
+  const avatarUrl = httpsUrl(person.avatarUrl);
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white ${sizes[size]} ${className}`}
       style={{ backgroundColor: color }}
       aria-hidden="true"
     >
-      {person.avatarUrl ? (
-        <AvatarPhoto key={person.avatarUrl} src={person.avatarUrl} fallback={initials(person.name)} />
+      {avatarUrl ? (
+        <AvatarPhoto key={avatarUrl} src={avatarUrl} fallback={initials(person.name)} />
       ) : (
         initials(person.name)
       )}

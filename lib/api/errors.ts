@@ -21,7 +21,10 @@ export class ApiError extends Error {
   }
 }
 
-const RATE_LIMITED_MESSAGE = "Muitas tentativas seguidas. Espere um pouco e tente de novo.";
+/** Formato dos códigos de erro da API; o que não casar não é mostrado. */
+const ERROR_CODE_PATTERN = /^[A-Z0-9_]{1,64}$/;
+
+const RATE_LIMITED_MESSAGE ="Muitas tentativas seguidas. Espere um pouco e tente de novo.";
 
 /** Mensagem de excesso de tentativas, com o tempo de espera quando a API informa. */
 export function rateLimitMessage(retryAfter?: number): string {
@@ -121,7 +124,8 @@ export function friendlyMessage(code: string, fallback = "Não foi possível con
     case "EDGE_BLOCKED":
       return "A conexão com o servidor do Kotta Groups foi bloqueada. Tente de novo em instantes. (EDGE_BLOCKED)";
     default:
-      // O código ajuda a identificar o problema nos logs.
-      return `${fallback} (${code})`;
+      // O código ajuda a identificar o problema nos logs. Texto livre (um `?erro=` forjado) não
+      // aparece na página.
+      return ERROR_CODE_PATTERN.test(code) ? `${fallback} (${code})` : fallback;
   }
 }

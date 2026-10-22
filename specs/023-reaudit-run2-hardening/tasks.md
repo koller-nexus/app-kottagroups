@@ -150,8 +150,8 @@ telas com token (#65).
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T031 Depois dos 5 PRs mergeados, em `main`: rodar `pnpm audit --prod`, `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e` e repetir o `quickstart.md` inteiro (SC-001–SC-007)
-- [ ] T032 Conferir que #64, #65, #66, #67 e #68 fecharam pelos PRs e comentar em #63 com uma tabela item → PR, mais o que segue fora do escopo (limite por IP compartilhado, cookie `__Host-`, confirmação extra da chave Pix, CSP completa). Fechar #63 (SC-008). Pedir confirmação antes de comentar ou fechar, porque é ação no GitHub
+- [X] T031 Depois dos 5 PRs mergeados, em `main`: rodar `pnpm audit --prod`, `pnpm lint`, `pnpm test`, `pnpm build` e `pnpm test:e2e` e repetir o `quickstart.md` inteiro (SC-001–SC-007). Feito em `main` @ 1ef394b: audit, lint, test e build verdes; e2e verde no CI do #79; passos manuais do quickstart feitos PR a PR (T011, T019, T022, T030), não repetidos em `main`
+- [X] T032 Conferir que #64, #65, #66, #67 e #68 fecharam pelos PRs e comentar em #63 com uma tabela item → PR, mais o que segue fora do escopo (limite por IP compartilhado, cookie `__Host-`, confirmação extra da chave Pix, CSP completa). Fechar #63 (SC-008). Pedir confirmação antes de comentar ou fechar, porque é ação no GitHub. Feito: comentário em #63 (inclui #78 → #79) e #63 fechada
 
 ---
 

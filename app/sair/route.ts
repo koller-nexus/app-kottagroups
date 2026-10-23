@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { apiOrigin } from "@/lib/api/server";
+import { apiOrigin } from "@/lib/api/origin";
 import { SESSION_COOKIE } from "@/lib/api/session";
 import { safeNextPath } from "@/lib/safe-next";
 import { logoutDestination, type TokenCheck } from "@/lib/session-flow";

@@ -3,13 +3,10 @@ import { headers as requestHeaders } from "next/headers";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { ApiError, parseErrorBody } from "@/lib/api/errors";
+import { apiOrigin } from "@/lib/api/origin";
 import { getSessionToken } from "@/lib/api/session";
 import { safeNextPath } from "@/lib/safe-next";
 import { confirmEmailUrl, expiredSessionUrl, PATH_HEADER } from "@/lib/session-flow";
-
-export function apiOrigin(): string {
-  return (process.env.API_ORIGIN ?? "https://api.kottagroups.com.br").replace(/\/$/, "");
-}
 
 // Contador de chamadas por request (React.cache vive só durante a renderização).
 const requestStats = cache(() => ({ calls: 0, tag: Math.random().toString(36).slice(2, 8) }));

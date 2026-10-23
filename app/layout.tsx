@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Mono } from "next/font/google";
+import { connection } from "next/server";
 import { VercelInsights } from "@/components/app/vercel-insights";
 import "./globals.css";
 
@@ -19,7 +20,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // O nonce da CSP muda a cada requisição: uma página pré-gerada sairia sem ele e com todos os
+  // scripts bloqueados.
+  await connection();
   return (
     <html
       lang="pt-BR"

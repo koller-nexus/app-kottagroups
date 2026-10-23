@@ -1,11 +1,10 @@
 import type { NextConfig } from "next";
-
-const apiOrigin = (
-  process.env.API_ORIGIN ?? "https://api.kottagroups.com.br"
-).replace(/\/$/, "");
+import { apiOrigin } from "./lib/api/origin";
 
 // Sem eles, o framing de páginas logadas só é barrado pelo cookie SameSite=Lax (#64). Sem
-// `preload` no HSTS, que é difícil de desfazer; uma CSP completa fica para outra entrega.
+// `preload` no HSTS, que é difícil de desfazer.
+// A CSP daqui (só frame) fica no que não passa pelo proxy: estáticos, /_next, /api e os
+// redirecionamentos abaixo. Nas páginas, o proxy sobrescreve com a política completa e o nonce.
 const SECURITY_HEADERS = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -37,7 +36,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${apiOrigin}/api/v1/:path*`,
+        destination: `${apiOrigin()}/api/v1/:path*`,
       },
     ];
   },

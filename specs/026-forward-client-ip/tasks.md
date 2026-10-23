@@ -99,7 +99,7 @@ Nomes usados abaixo: cabeçalho de IP = `X-Kotta-Client-IP`, cabeçalho de segre
 
 - [X] T013 [P] Em `README.md`, na seção "Área logada (integrada à api-kottagroups)" logo após o parágrafo de `API_ORIGIN`: parágrafo curto sobre `KOTTA_BFF_SECRET` — para que serve (a API conta o limite pelo IP do navegador, api#250), só servidor (sem `NEXT_PUBLIC_`), configurar na Vercel em Production e Preview com o mesmo valor da API de cada ambiente, sem ele o app funciona como antes; e na seção "Testes E2E" uma linha dizendo que a suíte usa `e2e-bff-secret` (FR-011)
 - [X] T014 Conferir o contrato fechado em api#250 (nomes dos cabeçalhos e mecanismo). Se diferir, ajustar só `lib/api/client-ip.ts`, `lib/api/client-ip.test.mjs`, `e2e/mock-api-proxy.ts` e `specs/026-forward-client-ip/contracts/bff-client-ip.md`; registrar no PR
-- [ ] T015 Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `API_ORIGIN=http://localhost:8085 pnpm test:e2e` (suíte inteira, SC-005); tudo passa
+- [X] T015 Rodar `pnpm lint`, `pnpm test`, `pnpm build` e `API_ORIGIN=http://localhost:8085 pnpm test:e2e` (suíte inteira, SC-005); tudo passa
 - [ ] T016 Depois do merge (pessoa responsável pelo deploy): configurar `KOTTA_BFF_SECRET` na Vercel (Production e Preview) com o valor combinado com a API e validar quickstart §4 (logs da API com IPs variados; nenhum aviso "client IP not forwarded" nos logs da Vercel)
 
 ---

@@ -1,7 +1,10 @@
 import { expect, test, type BrowserContext } from "./fixtures";
 import { signIn } from "./sign-in";
 
-const SESSION_COOKIE = "kotta_session";
+const SESSION_COOKIE = "__Host-kotta_session";
+const LEGACY_SESSION_COOKIE = "kotta_session";
+const isSessionCookie = (cookie: { name: string }) =>
+  cookie.name === SESSION_COOKIE || cookie.name === LEGACY_SESSION_COOKIE;
 const NO_SESSION = { cookies: [], origins: [] };
 
 /** JWT com `exp` no passado. A assinatura não importa: o proxy só lê o payload. */
@@ -11,7 +14,11 @@ function expiredToken(): string {
 }
 
 async function useExpiredSession(context: BrowserContext) {
-  await context.addCookies([{ name: SESSION_COOKIE, value: expiredToken(), domain: "localhost", path: "/" }]);
+  // `domain`/`path` em vez de `url`: com `url` o Playwright põe secure=false em http, e o
+  // Chromium recusa um cookie `__Host-` sem Secure.
+  await context.addCookies([
+    { name: SESSION_COOKIE, value: expiredToken(), domain: "localhost", path: "/", secure: true },
+  ]);
 }
 
 test.describe("sessão vencida", () => {
@@ -26,7 +33,19 @@ test.describe("sessão vencida", () => {
     expect(url.searchParams.get("motivo")).toBe("expirada");
     expect(url.searchParams.get("next")).toBe("/grupos");
     await expect(page.getByText("Sua sessão expirou. Entre de novo para continuar.")).toBeVisible();
-    expect((await context.cookies()).some((cookie) => cookie.name === SESSION_COOKIE)).toBe(false);
+    expect((await context.cookies()).some(isSessionCookie)).toBe(false);
+  });
+
+  test("cookie antigo vencido leva para /entrar com aviso e apaga o cookie", async ({ page, context }) => {
+    await context.addCookies([{ name: LEGACY_SESSION_COOKIE, value: expiredToken(), domain: "localhost", path: "/" }]);
+    await page.goto("/grupos");
+
+    await expect(page).toHaveURL(/\/entrar\?/);
+    const url = new URL(page.url());
+    expect(url.searchParams.get("motivo")).toBe("expirada");
+    expect(url.searchParams.get("next")).toBe("/grupos");
+    await expect(page.getByText("Sua sessão expirou. Entre de novo para continuar.")).toBeVisible();
+    expect((await context.cookies()).some(isSessionCookie)).toBe(false);
   });
 
   test("cookie vencido em /entrar não volta para /", async ({ page, context }) => {

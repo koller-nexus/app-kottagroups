@@ -1,4 +1,4 @@
-import { test as setup } from "@playwright/test";
+import { test as setup } from "./fixtures";
 import { AUTH_FILE } from "../playwright.config";
 import { signIn } from "./sign-in";
 

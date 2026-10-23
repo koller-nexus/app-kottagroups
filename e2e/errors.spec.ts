@@ -1,4 +1,4 @@
-import { expect, test, type BrowserContext } from "@playwright/test";
+import { expect, test, type BrowserContext } from "./fixtures";
 import { signIn } from "./sign-in";
 
 const SESSION_COOKIE = "kotta_session";

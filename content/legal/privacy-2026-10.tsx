@@ -91,7 +91,7 @@ export const privacy: LegalDocumentContent = {
       body: (
         <ul>
           <li>
-            <strong>kotta_session</strong>: cookie estritamente necessário, mantém você conectado. Vence junto com a
+            <strong>__Host-kotta_session</strong>: cookie estritamente necessário, mantém você conectado. Vence junto com a
             sessão.
           </li>
           <li>Vercel Analytics: mede visitas de forma agregada, sem identificar você.</li>

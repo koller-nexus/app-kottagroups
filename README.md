@@ -21,7 +21,9 @@ Abra [http://localhost:3002](http://localhost:3002): a home é a dashboard do ap
 Rotas: `/entrar`, `/cadastrar`, `/confirme-seu-email`, `/`, `/grupos`, `/grupos/novo`, `/grupos/[id]`, `/despesas/nova` e `/perfil`.
 
 - As páginas buscam os dados no servidor do Next (`lib/api/kotta.ts`), nunca no navegador.
-- O token JWT da API fica no cookie `httpOnly` `kotta_session` (24 h, igual ao token).
+- O token JWT da API fica no cookie `__Host-kotta_session` (`httpOnly`, `Secure` também em dev, sem
+  domínio; 24 h, igual ao token). Por causa do `Secure`, rode o dev local em Chromium ou Firefox: o
+  Safari pode recusar o cookie em `http://localhost`.
 - `proxy.ts` manda quem não tem sessão para `/entrar`.
 - Token recusado pela API → `/sair` apaga o cookie e volta para `/entrar`.
 - E-mail não confirmado → `/confirme-seu-email`.

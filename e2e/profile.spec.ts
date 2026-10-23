@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { MOCK_API_PORT } from "./mock-api-port";
 import { runId } from "./run-id";
 

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { expect, test, type Page, type Request } from "@playwright/test";
+import { expect, test, type Page, type Request } from "./fixtures";
 import { runId } from "./run-id";
 
 const FIXTURES = path.join(__dirname, "..", "tests", "fixtures", "receipts");

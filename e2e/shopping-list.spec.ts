@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { runId } from "./run-id";
 
 test("criar lista, adicionar item e marcar como comprado", async ({ page }) => {

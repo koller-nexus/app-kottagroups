@@ -1,5 +1,5 @@
 import path from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { MOCK_API_PORT } from "./mock-api-port";
 import { runId } from "./run-id";
 

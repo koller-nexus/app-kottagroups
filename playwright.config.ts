@@ -5,6 +5,8 @@ import { MOCK_API_PORT } from "./e2e/mock-api-port";
 const PORT = Number(process.env.E2E_PORT ?? 3002);
 const BASE_URL = `http://localhost:${PORT}`;
 export const AUTH_FILE = "e2e/.auth/user.json";
+/** Segredo do front só para a suíte; o Next o repassa à API simulada (specs/026-forward-client-ip). */
+export const E2E_BFF_SECRET = "e2e-bff-secret";
 
 const isCI = Boolean(process.env.CI);
 
@@ -48,7 +50,7 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 300_000,
       // O app fala com a API pelo proxy; só o login do setup usa a API real.
-      env: { API_ORIGIN: `http://localhost:${MOCK_API_PORT}` },
+      env: { API_ORIGIN: `http://localhost:${MOCK_API_PORT}`, KOTTA_BFF_SECRET: E2E_BFF_SECRET },
     },
   ],
 });

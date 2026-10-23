@@ -1,6 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiOrigin } from "@/lib/api/origin";
 import { contentSecurityPolicy, createNonce } from "@/lib/csp";
+import {
+  LEGACY_SESSION_COOKIE,
+  SESSION_COOKIE,
+  clearSessionCookies,
+  readSessionToken,
+  sessionCookieAction,
+  sessionCookieOptions,
+  type SessionCookieAction,
+} from "@/lib/session-cookie";
 import { isSessionExpired } from "@/lib/session-expiry";
 import { PATH_HEADER } from "@/lib/session-flow";
 
@@ -13,7 +22,8 @@ const CSP_HEADER =
 // Checagem local: só lê o `exp` do JWT no cookie, sem verificar assinatura. A validade do
 // token é confirmada pela API em cada chamada (lib/api/server.ts). Um cookie vencido é
 // apagado aqui mesmo, para a pessoa chegar em /entrar sabendo que a sessão expirou.
-const SESSION_COOKIE = "kotta_session";
+// Durante a transição para o cookie `__Host-` (#84), quem chega só com o nome antigo e token
+// válido sai desta resposta com o cookie novo: páginas não podem gravar cookie.
 const PROTECTED = ["/grupos", "/notificacoes", "/notas", "/perfil", "/despesas", "/confirme-seu-email"];
 const GUEST_ONLY = ["/entrar", "/cadastrar", "/esqueci-a-senha"];
 
@@ -21,14 +31,20 @@ function matches(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-function clearingExpiredCookie(response: NextResponse, expired: boolean): NextResponse {
-  if (expired) response.cookies.delete(SESSION_COOKIE);
+function syncingSessionCookies(response: NextResponse, action: SessionCookieAction, token?: string): NextResponse {
+  if (action === "clear") clearSessionCookies(response.cookies);
+  if (action === "migrate" && token) response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(token));
+  if (action === "migrate" || action === "drop-legacy") response.cookies.delete(LEGACY_SESSION_COOKIE);
   return response;
 }
 
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const token = readSessionToken(request.cookies);
+  const action = sessionCookieAction(
+    request.cookies.get(SESSION_COOKIE)?.value,
+    request.cookies.get(LEGACY_SESSION_COOKIE)?.value,
+  );
   const expired = Boolean(token) && isSessionExpired(token);
   const hasValidSession = Boolean(token) && !expired;
 
@@ -39,11 +55,11 @@ export default function proxy(request: NextRequest) {
     if (pathname !== "/confirme-seu-email") url.searchParams.set("next", `${pathname}${search}`);
     // Sem cookie numa rota protegida quase sempre é sessão que venceu (o cookie expira com o JWT).
     url.searchParams.set("motivo", "expirada");
-    return clearingExpiredCookie(NextResponse.redirect(url), expired);
+    return syncingSessionCookies(NextResponse.redirect(url), action, token);
   }
 
   if (hasValidSession && matches(pathname, GUEST_ONLY)) {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
+    return syncingSessionCookies(NextResponse.redirect(new URL("/", request.nextUrl)), action, token);
   }
 
   // Caminho atual para o apiRequest montar o "voltar para" quando a sessão expira.
@@ -59,7 +75,7 @@ export default function proxy(request: NextRequest) {
   headers.set(CSP_HEADER, policy);
   const response = NextResponse.next({ request: { headers } });
   response.headers.set(CSP_HEADER, policy);
-  return clearingExpiredCookie(response, expired);
+  return syncingSessionCookies(response, action, token);
 }
 
 export const config = {

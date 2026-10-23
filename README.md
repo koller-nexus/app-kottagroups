@@ -36,6 +36,12 @@ API_ORIGIN=http://localhost:8085 pnpm dev
 
 No seed de desenvolvimento da API, entre com `williamkoller@kottagroups.com.br` / `kotta123`.
 
+`KOTTA_BFF_SECRET` (só servidor, nunca `NEXT_PUBLIC_`): com ela, toda chamada do servidor à API
+leva o IP do navegador (`X-Kotta-Client-IP`) e o segredo (`X-Kotta-Bff-Secret`), para a API
+contar o limite de requisições por pessoa e não pelo IP de saída da Vercel (api#250). Configure
+na Vercel em Production e Preview, com o mesmo valor da API de cada ambiente. Sem ela, o app
+funciona como antes (em produção, um aviso no log); no desenvolvimento local, deixe sem.
+
 ## Scripts
 
 ```bash
@@ -81,6 +87,8 @@ de desenvolvimento. Não há mock: as páginas buscam os dados no servidor do Ne
   `API not reachable at …`.
 - Cada execução cria grupo, despesa, lista e categoria com um sufixo único, então dá para repetir
   sem limpar o banco.
+- O servidor da suíte roda com `KOTTA_BFF_SECRET=e2e-bff-secret`; o proxy de mock registra os
+  cabeçalhos que chegam à API em `/__mock/last-headers` (`e2e/client-ip.spec.ts`).
 
 Na CI (`.github/workflows/e2e.yml`), todo PR sobe Postgres, Redis e a API (`develop`) e roda a
 suíte. Se algum teste falha, o relatório, os traces e o log da API ficam no artefato `e2e-report`.

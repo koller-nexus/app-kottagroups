@@ -2,6 +2,7 @@ import "server-only";
 import { headers as requestHeaders } from "next/headers";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { clientIpHeaders } from "@/lib/api/client-ip";
 import { ApiError, parseErrorBody } from "@/lib/api/errors";
 import { apiOrigin } from "@/lib/api/origin";
 import { getSessionToken } from "@/lib/api/session";
@@ -18,6 +19,22 @@ function logTiming(method: string, path: string, status: number | string, starte
   stats.calls += 1;
   const route = path.split("?")[0];
   console.info(`[api] r${stats.tag} #${stats.calls} ${method} ${route} -> ${status} ${Math.round(performance.now() - startedAt)}ms`);
+}
+
+// Estado do processo, não da requisição: só evita repetir o aviso.
+let warnedMissingSecret = false;
+
+/**
+ * IP do navegador e segredo do front, para a API contar o limite por pessoa (api#250).
+ * O segredo vem de `KOTTA_BFF_SECRET`, só do servidor; sem ele, nada é enviado.
+ */
+export async function bffHeaders(): Promise<Record<string, string>> {
+  const secret = process.env.KOTTA_BFF_SECRET;
+  if (!secret && process.env.VERCEL_ENV === "production" && !warnedMissingSecret) {
+    warnedMissingSecret = true;
+    console.warn("[api] client IP not forwarded: KOTTA_BFF_SECRET is not set");
+  }
+  return clientIpHeaders(await requestHeaders(), secret);
 }
 
 type JsonBody = Record<string, unknown> | unknown[];
@@ -37,6 +54,8 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   const { body, auth = true, ...rest } = init;
   const headers = new Headers(rest.headers);
   headers.set("Accept", "application/json");
+  // Por último, para nenhum chamador trocar o IP ou o segredo.
+  for (const [name, value] of Object.entries(await bffHeaders())) headers.set(name, value);
 
   const method = (rest.method ?? "GET").toUpperCase();
   const token = auth ? await getSessionToken() : undefined;

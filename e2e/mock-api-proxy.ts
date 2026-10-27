@@ -19,8 +19,11 @@ interface Scenario {
 }
 
 const scenarios = new Map<string, Scenario>();
-/** GET nestes paths responde o status indicado, como se a API estivesse fora (`PUT/DELETE /__mock/fail`). */
-const failures = new Map<string, number>();
+/**
+ * `"<METHOD> <path>"` responde o status e o código indicados, sem passar pela API real
+ * (`PUT/DELETE /__mock/fail`). Sem `method`, vale para GET; sem `code`, `SERVICE_UNAVAILABLE`.
+ */
+const failures = new Map<string, { status: number; code: string }>();
 /** Campos que sobrescrevem a nota do grupo devolvida pela API real (ex.: status). */
 const invoiceOverrides = new Map<string, Record<string, unknown>>();
 /** Cabeçalhos x-kotta-* de cada chamada a /api/v1, em ordem de chegada (`GET/DELETE /__mock/last-headers`). */
@@ -80,17 +83,19 @@ createServer(async (req, res) => {
 
   if (url.pathname === "/__mock/fail") {
     if (method === "PUT") {
-      const { path, status } = JSON.parse(body.toString()) as { path: string; status: number };
-      failures.set(path, status);
+      const { path, status, method: failMethod = "GET", code = "SERVICE_UNAVAILABLE" } = JSON.parse(
+        body.toString(),
+      ) as { path: string; status: number; method?: string; code?: string };
+      failures.set(`${failMethod} ${path}`, { status, code });
     } else if (method === "DELETE") {
       failures.clear();
     }
     return send(res, 204, {});
   }
 
-  const failureStatus = method === "GET" ? failures.get(url.pathname) : undefined;
-  if (failureStatus) {
-    return send(res, failureStatus, { error: { code: "SERVICE_UNAVAILABLE", message: "Mock failure." } });
+  const failure = failures.get(`${method} ${url.pathname}`);
+  if (failure) {
+    return send(res, failure.status, { error: { code: failure.code, message: "Mock failure." } });
   }
 
   const invoiceControl = INVOICE_CONTROL_PATH.exec(url.pathname);

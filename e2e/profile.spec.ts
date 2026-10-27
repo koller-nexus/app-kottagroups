@@ -4,11 +4,11 @@ import { runId } from "./run-id";
 
 const MOCK_ORIGIN = `http://localhost:${MOCK_API_PORT}`;
 
-/** Faz o proxy responder `status` em GET neste path da API. */
-async function failApi(path: string, status = 503) {
+/** Faz o proxy responder `status` (e `code`) neste path da API; sem `method`, só em GET. */
+async function failApi(path: string, status = 503, options: { method?: string; code?: string } = {}) {
   const response = await fetch(`${MOCK_ORIGIN}/__mock/fail`, {
     method: "PUT",
-    body: JSON.stringify({ path, status }),
+    body: JSON.stringify({ path, status, ...options }),
   });
   expect(response.ok).toBe(true);
 }
@@ -127,4 +127,73 @@ test("criar categoria", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/perfil\/categorias$/);
   await expect(page.getByText(name)).toBeVisible();
+});
+
+test("editar só o nome salva sem pedir senha", async ({ page }) => {
+  const name = `E2E nome ${runId}`;
+  await page.goto("/perfil");
+  await page.getByLabel("Nome", { exact: true }).fill(name);
+  await expect(page.getByLabel("Senha atual")).toHaveCount(0);
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+
+  await expect(page.getByText("Alterações salvas.")).toBeVisible();
+  const summary = page.getByRole("region", { name: "Resumo da conta" });
+  await expect(summary.getByText(name, { exact: true })).toBeVisible();
+});
+
+test("voltar a chave ao valor salvo esconde a senha", async ({ page }) => {
+  await page.goto("/perfil");
+  const pixKey = page.getByLabel("Chave Pix");
+  const saved = await pixKey.inputValue();
+
+  await pixKey.fill(`${saved}x`);
+  await expect(page.getByLabel("Senha atual")).toBeVisible();
+  await pixKey.fill(saved);
+  await expect(page.getByLabel("Senha atual")).toHaveCount(0);
+});
+
+test("trocar a chave sem senha mostra o erro no campo", async ({ page }) => {
+  // CURRENT_PASSWORD_REQUIRED vem antes do limite de tentativas da API: não gasta tentativa.
+  const key = `e2e-${runId}-sem-senha@example.com`;
+  await page.goto("/perfil");
+  await page.getByLabel("Chave Pix").fill(key);
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+
+  const password = page.getByLabel("Senha atual");
+  await expect(password).toHaveAccessibleDescription(/Digite sua senha atual para trocar a chave Pix\./);
+  await expect(password).toBeFocused();
+  await expect(page.getByLabel("Chave Pix")).toHaveValue(key);
+});
+
+test("senha errada mostra o erro no campo e mantém a sessão", async ({ page }) => {
+  // Pelo mock: senha errada na API real gastaria uma das 5 tentativas a cada 15 min.
+  await failApi("/api/v1/users/me", 403, { method: "PATCH", code: "CURRENT_PASSWORD_INVALID" });
+  const name = `E2E nome errada ${runId}`;
+  const key = `e2e-${runId}-errada@example.com`;
+  await page.goto("/perfil");
+  await page.getByLabel("Nome", { exact: true }).fill(name);
+  await page.getByLabel("Chave Pix").fill(key);
+  await page.getByLabel("Senha atual").fill("senha-errada");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+
+  const password = page.getByLabel("Senha atual");
+  await expect(password).toHaveAccessibleDescription(/Senha incorreta\./);
+  await expect(password).toHaveValue("");
+  await expect(page.getByLabel("Nome", { exact: true })).toHaveValue(name);
+  await expect(page.getByLabel("Chave Pix")).toHaveValue(key);
+  await expect(page).toHaveURL(/\/perfil$/);
+});
+
+test("trocar a chave Pix com a senha certa salva", async ({ page }) => {
+  // Única checagem de senha real por execução; a chave não é restaurada para não gastar outra.
+  const key = `e2e-${runId}@example.com`;
+  await page.goto("/perfil");
+  await page.getByLabel("Chave Pix").fill(key);
+  await page.getByLabel("Senha atual").fill(process.env.E2E_PASSWORD ?? "");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+
+  await expect(page.getByText("Alterações salvas.")).toBeVisible();
+  const summary = page.getByRole("region", { name: "Resumo da conta" });
+  await expect(summary.getByText(`Chave Pix: ${key}`, { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Senha atual")).toHaveCount(0);
 });

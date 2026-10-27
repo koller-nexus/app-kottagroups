@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiOrigin } from "@/lib/api/origin";
+import { bffHeaders } from "@/lib/api/server";
 import { safeNextPath } from "@/lib/safe-next";
 import { clearSessionCookies, readSessionToken } from "@/lib/session-cookie";
 import { logoutDestination, type TokenCheck } from "@/lib/session-flow";
@@ -8,7 +9,7 @@ import { logoutDestination, type TokenCheck } from "@/lib/session-flow";
 async function checkToken(token: string): Promise<TokenCheck> {
   try {
     const response = await fetch(`${apiOrigin()}/api/v1/users/me`, {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}`, ...(await bffHeaders()) },
       cache: "no-store",
     });
     if (response.status === 401) return "invalid";

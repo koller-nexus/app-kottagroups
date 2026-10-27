@@ -23,6 +23,8 @@ const scenarios = new Map<string, Scenario>();
 const failures = new Map<string, number>();
 /** Campos que sobrescrevem a nota do grupo devolvida pela API real (ex.: status). */
 const invoiceOverrides = new Map<string, Record<string, unknown>>();
+/** Cabeçalhos x-kotta-* de cada chamada a /api/v1, em ordem de chegada (`GET/DELETE /__mock/last-headers`). */
+const receivedHeaders: { path: string; clientIp?: string; secret?: string }[] = [];
 const INVOICE_PATH = /^\/api\/v1\/invoices\/([^/]+)$/;
 const INVOICE_CONTROL_PATH = /^\/__mock\/invoice\/([^/]+)$/;
 const RECEIPT_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)\/receipt$/;
@@ -61,6 +63,19 @@ createServer(async (req, res) => {
   if (file) {
     res.writeHead(200, { "content-type": file.type });
     return res.end(file.bytes);
+  }
+
+  if (url.pathname.startsWith("/api/v1/")) {
+    const header = (name: string) => (typeof req.headers[name] === "string" ? req.headers[name] : undefined);
+    receivedHeaders.push({ path: url.pathname, clientIp: header("x-kotta-client-ip"), secret: header("x-kotta-bff-secret") });
+  }
+
+  if (url.pathname === "/__mock/last-headers") {
+    if (method === "DELETE") {
+      receivedHeaders.length = 0;
+      return send(res, 204, {});
+    }
+    return send(res, 200, { items: receivedHeaders });
   }
 
   if (url.pathname === "/__mock/fail") {

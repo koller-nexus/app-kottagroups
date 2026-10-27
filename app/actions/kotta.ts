@@ -5,7 +5,8 @@ import { ApiError, friendlyMessage } from "@/lib/api/errors";
 import { apiRequest } from "@/lib/api/server";
 import { avatarFileProblem } from "@/lib/avatar";
 import type { ApiSettlement, ApiUser } from "@/lib/api/types";
-import { failure, text, type FormState } from "@/lib/form";
+import { failure, rawText, text, type FormState } from "@/lib/form";
+import { passwordErrorMessage, profileUpdateBody } from "@/lib/profile-update";
 
 // Quitações mudam o contador do sino; avatar e nome aparecem no shell. Todas as actions daqui
 // afetam o shell, então invalidam o app inteiro ("/", "layout").
@@ -50,18 +51,26 @@ export async function updateAvatarAction(_prev: FormState, formData: FormData): 
   return { ok: true };
 }
 
-export async function updateProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Estado do formulário do perfil; a senha digitada nunca volta ao navegador. */
+export type ProfileFormState = FormState & { passwordError?: string };
+
+export async function updateProfileAction(_prev: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
   const name = text(formData, "name");
   const pixKey = text(formData, "pixKey");
   const values = { name, pixKey };
   if (!name) return { error: "O nome não pode ficar vazio.", values };
 
+  const body = profileUpdateBody({
+    name,
+    pixKey,
+    savedPixKey: text(formData, "savedPixKey"),
+    currentPassword: rawText(formData, "currentPassword"),
+  });
   try {
-    await apiRequest<ApiUser>("/users/me", {
-      method: "PATCH",
-      body: { name, pixKey: pixKey || null },
-    });
+    await apiRequest<ApiUser>("/users/me", { method: "PATCH", body });
   } catch (error) {
+    const passwordError = error instanceof ApiError ? passwordErrorMessage(error.code, error.retryAfter) : undefined;
+    if (passwordError) return { passwordError, values };
     return failure(error, values);
   }
   revalidatePath("/", "layout");

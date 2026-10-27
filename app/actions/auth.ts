@@ -9,7 +9,7 @@ import { clearSessionToken, getSessionToken, setSessionToken } from "@/lib/api/s
 import type { ApiUser } from "@/lib/api/types";
 import { fieldErrorFromApi, hasErrors, validateLogin, validateRegistration, type FieldErrors } from "@/lib/auth-validation";
 import { confirmationOutcome, isUsableConfirmationToken, type ConfirmationOutcome } from "@/lib/confirm-email";
-import { failure, type FormState } from "@/lib/form";
+import { failure, rawText, type FormState } from "@/lib/form";
 import { PRIVACY_VERSION, TERMS_VERSION } from "@/lib/legal";
 import { safeNextPath } from "@/lib/safe-next";
 import { isSessionExpired } from "@/lib/session-expiry";
@@ -30,11 +30,6 @@ const LOGOUT_TIMEOUT_MS = 3_000;
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
-}
-
-function rawText(formData: FormData, key: string): string {
-  const value = formData.get(key);
-  return typeof value === "string" ? value : "";
 }
 
 /**

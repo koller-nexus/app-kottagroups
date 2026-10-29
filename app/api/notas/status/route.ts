@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "@/lib/api/errors";
-import { getInvoice } from "@/lib/api/kotta";
+import { getInvoiceStatuses } from "@/lib/api/kotta";
 import { getSessionToken } from "@/lib/api/session";
 import { parseStatusIds } from "@/lib/poll-schedule";
 
@@ -8,8 +8,9 @@ const NO_STORE = { "Cache-Control": "no-store" };
 
 /**
  * Status das notas em leitura, para o acompanhamento não recarregar a tela inteira.
- * Só leitura. Sessão expirada vira redirecionamento do apiRequest; o cliente então
- * recarrega a página, que segue o fluxo de sessão expirada de sempre.
+ * Só leitura, uma chamada à API por ciclo; notas sem acesso já vêm fora da resposta dela.
+ * Sessão expirada vira redirecionamento do apiRequest; o cliente então recarrega a página,
+ * que segue o fluxo de sessão expirada de sempre.
  */
 export async function GET(request: NextRequest) {
   const ids = parseStatusIds(request.nextUrl.searchParams.get("ids"));
@@ -19,19 +20,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const invoices = await Promise.all(ids.map((id) => getInvoice(id).catch(skipMissing)));
-    const items = invoices.flatMap((invoice) => (invoice ? [{ id: invoice.id, status: invoice.status }] : []));
-    return NextResponse.json({ items }, { headers: NO_STORE });
+    const { items } = await getInvoiceStatuses(ids);
+    return NextResponse.json({ items: items.map(({ id, status }) => ({ id, status })) }, { headers: NO_STORE });
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json({ error: "Service unavailable" }, { status: 503, headers: NO_STORE });
     }
     throw error;
   }
-}
-
-/** Nota excluída ou de outro grupo some da resposta em vez de derrubar as demais. */
-function skipMissing(error: unknown): null {
-  if (error instanceof ApiError && (error.status === 404 || error.status === 403)) return null;
-  throw error;
 }

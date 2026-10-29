@@ -195,6 +195,12 @@ export interface ApiShoppingListDetail extends ApiShoppingListSummary {
 
 export type ApiInvoiceStatus = "queued" | "processing" | "done" | "failed" | "needs_review";
 
+/** Item da consulta de status em lote (`GET /invoices/status`). */
+export interface ApiInvoiceStatusItem {
+  id: string;
+  status: ApiInvoiceStatus;
+}
+
 export interface ApiInvoice {
   id: string;
   groupId: string | null;

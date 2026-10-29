@@ -12,6 +12,7 @@ import type {
   ApiGroupSummary,
   ApiInvitePreview,
   ApiInvoice,
+  ApiInvoiceStatusItem,
   ApiNotification,
   ApiSettlement,
   ApiShoppingListDetail,
@@ -144,6 +145,11 @@ export const listGroupInvoicesPage = cache((groupId: string, cursor?: string, li
 export const getInvoice = cache((id: string) =>
   apiRequest<ApiInvoice>(`/invoices/${encodeURIComponent(id)}`),
 );
+
+/** Status de até 20 notas numa requisição; a API omite as que a pessoa não pode ver. */
+export function getInvoiceStatuses(ids: string[]) {
+  return apiRequest<{ items: ApiInvoiceStatusItem[] }>(withQuery("/invoices/status", { ids: ids.join(",") }));
+}
 
 /** Prévia pública do convite (sem sessão). O token vai no corpo, nunca na URL da API. */
 export const previewInvite = cache((token: string) =>

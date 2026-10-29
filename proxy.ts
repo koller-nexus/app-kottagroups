@@ -78,6 +78,8 @@ export default function proxy(request: NextRequest) {
   return syncingSessionCookies(response, action, token);
 }
 
+// sw.js, o manifest e offline.* ficam fora: são estáticos sem nonce, e um offline.js externo seria
+// bloqueado pelo 'strict-dynamic' da política das páginas (specs/029-pwa-installable).
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|offline\\.|.*\\.png$|.*\\.svg$).*)"],
 };

@@ -197,6 +197,55 @@ test.describe("notas do grupo", () => {
     await expect(page.getByRole("heading", { name: "Notas", level: 1 })).toBeVisible();
     await expect(page.locator(`a[href="${notePath}"]`)).toBeVisible();
   });
+
+  test("várias notas em leitura usam uma única consulta de status à API", async ({ page }) => {
+    const groupNotes = notePath.replace(/\/[^/]+$/, "");
+    await page.goto(groupNotes);
+    await page.getByLabel("Foto da nota").setInputFiles(RECEIPT);
+    await page.getByRole("button", { name: "Enviar nota" }).click();
+    await expect(page).toHaveURL(/\/grupos\/[^/]+\/notas\/[^/]+$/);
+    const secondPath = new URL(page.url()).pathname;
+    const ids = [notePath, secondPath].map((notaPath) => notaPath.split("/").pop()!);
+    for (const id of ids) await setInvoice(id, { status: "processing", expenseId: null });
+
+    await page.goto(groupNotes);
+    // Só as chamadas do acompanhamento, sem as do carregamento da página.
+    await fetch(`${MOCK_ORIGIN}/__mock/last-headers`, { method: "DELETE" });
+    const statusResponse = await page.waitForResponse((response) => response.url().includes("/api/notas/status"));
+    const requested = new URL(statusResponse.url()).searchParams.get("ids")!.split(",");
+    expect(requested).toEqual(expect.arrayContaining(ids));
+    const { items } = (await statusResponse.json()) as { items: { id: string; status: string }[] };
+    expect(items).toEqual(expect.arrayContaining(ids.map((id) => ({ id, status: "processing" }))));
+
+    const { items: calls } = (await (await fetch(`${MOCK_ORIGIN}/__mock/last-headers`)).json()) as {
+      items: { path: string }[];
+    };
+    const paths = calls.map((call) => call.path);
+    expect(paths).toContain("/api/v1/invoices/status");
+    expect(paths.filter((path) => /^\/api\/v1\/invoices\/(?!status$)[^/]+$/.test(path))).toEqual([]);
+
+    for (const id of ids) await setInvoice(id, { status: "done", expenseId: null });
+    for (const notaPath of [notePath, secondPath]) {
+      await expect(page.locator(`a[href="${notaPath}"]`).getByText("Pronta")).toBeVisible({ timeout: 15_000 });
+    }
+    for (const id of ids) await setInvoice(id, {});
+  });
+
+  test("nota inexistente some da consulta de status sem erro", async ({ page }) => {
+    const invoiceId = notePath.split("/").pop()!;
+    await setInvoice(invoiceId, { status: "processing", expenseId: null });
+    await page.goto(notePath);
+
+    const unknownId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+    const response = await page.request.get(`/api/notas/status?ids=${invoiceId},${unknownId}`);
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({ items: [{ id: invoiceId, status: "processing" }] });
+
+    const invalid = await page.request.get("/api/notas/status?ids=abc");
+    expect(invalid.status()).toBe(400);
+    expect(await invalid.json()).toEqual({ error: "Invalid ids" });
+    await setInvoice(invoiceId, {});
+  });
 });
 
 test("/notificacoes mostra as pendências ou o estado vazio", async ({ page }) => {

@@ -29,6 +29,8 @@ const invoiceOverrides = new Map<string, Record<string, unknown>>();
 /** Cabeçalhos x-kotta-* de cada chamada a /api/v1, em ordem de chegada (`GET/DELETE /__mock/last-headers`). */
 const receivedHeaders: { path: string; clientIp?: string; secret?: string }[] = [];
 const INVOICE_PATH = /^\/api\/v1\/invoices\/([^/]+)$/;
+const INVOICE_STATUS_PATH = "/api/v1/invoices/status";
+const GROUP_INVOICES_PATH = /^\/api\/v1\/groups\/[^/]+\/invoices$/;
 const INVOICE_CONTROL_PATH = /^\/__mock\/invoice\/([^/]+)$/;
 const RECEIPT_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)\/receipt$/;
 const RETRY_PATH = /^\/api\/v1\/shopping-lists\/([^/]+)\/receipt\/retry$/;
@@ -142,6 +144,15 @@ createServer(async (req, res) => {
   const headers = Object.fromEntries(
     [...upstream.headers].filter(([k]) => !["content-encoding", "content-length", "transfer-encoding"].includes(k)),
   );
+
+  // Listas de notas (status em lote e notas do grupo) recebem o mesmo overlay, item a item.
+  // Antes do overlay por nota: INVOICE_PATH também casaria o caminho do lote, com id "status".
+  const isInvoiceList = url.pathname === INVOICE_STATUS_PATH || GROUP_INVOICES_PATH.test(url.pathname);
+  if (method === "GET" && isInvoiceList && upstream.ok) {
+    const payload = JSON.parse(text) as { data: { items: { id: string }[] } };
+    const items = payload.data.items.map((item) => ({ ...item, ...invoiceOverrides.get(item.id) }));
+    return send(res, upstream.status, { data: { ...payload.data, items } });
+  }
 
   const overrideId = method === "GET" ? INVOICE_PATH.exec(url.pathname)?.[1] : undefined;
   const invoiceOverride = overrideId ? invoiceOverrides.get(overrideId) : undefined;

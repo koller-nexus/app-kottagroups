@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -7,6 +8,7 @@ import { markSettlementPaidAction, undoSettlementPaidAction } from "@/app/action
 import { FormError } from "@/components/auth/field";
 import { Avatar, AvatarStack } from "@/components/app/avatar";
 import { CategoryBars } from "@/components/app/category-bars";
+import { ChargeSettlementButton } from "@/components/app/charge-settlement-button";
 import { ConfirmDelete } from "@/components/app/confirm-delete";
 import { CopyTextButton } from "@/components/app/copy-text-button";
 import { ExpenseRow } from "@/components/app/expense-row";
@@ -14,6 +16,7 @@ import { GardenField } from "@/components/app/garden-field";
 import { GroupInvoicesCard } from "@/components/app/group-invoices-card";
 import { GroupMenu } from "@/components/app/group-menu";
 import { InviteDialog } from "@/components/invites/invite-dialog";
+import { ShareGroupSummaryButton } from "@/components/app/share-group-summary-button";
 import { ShoppingListsCard } from "@/components/app/shopping-lists-card";
 import { Price } from "@/components/app/price";
 import { ArrowRightIcon, PlusIcon } from "@/components/app/icons";
@@ -78,6 +81,11 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
   });
   const expensePage = filtered ?? recent;
   const balances = groupBalances ?? group.balances;
+
+  // Link do grupo para os textos de "Cobrar"/"Compartilhar resumo" (lib/share-text.ts);
+  // não há rota própria por acerto, então o link aponta para esta página.
+  const requestHeaders = await headers();
+  const groupUrl = `${requestHeaders.get("x-forwarded-proto") ?? "https"}://${requestHeaders.get("host")}/grupos/${group.id}`;
 
   const names = peopleById([group]);
   const category = categoryLookup(categories);
@@ -320,7 +328,19 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
           </GardenField>
 
           <section aria-labelledby="acertos">
-            <SectionLabel id="acertos">Para acertar</SectionLabel>
+            <div className="flex items-center justify-between gap-3">
+              <SectionLabel id="acertos">Para acertar</SectionLabel>
+              <ShareGroupSummaryButton
+                groupUrl={groupUrl}
+                groupName={group.name}
+                pendingSettlements={open.map((s) => ({
+                  payerName: displayName(names, s.from, me.id),
+                  payeeName: displayName(names, s.to, me.id),
+                  amountCents: s.amountCents,
+                  payeePixKey: s.to === me.id ? me.pixKey : undefined,
+                }))}
+              />
+            </div>
             {open.length === 0 ? (
               <p className="rounded-card border border-kotta-border bg-kotta-surface p-6 text-sm text-kotta-muted">
                 Todos estão quites neste grupo.
@@ -363,12 +383,22 @@ export default async function GrupoPage({ params, searchParams }: PageProps<"/gr
                           </button>
                         </form>
                       ) : null}
-                      {settlement.to === me.id && me.pixKey ? (
-                        <div className="mt-2">
-                          <CopyTextButton
-                            text={me.pixKey}
-                            label="Copiar minha chave Pix"
-                            copiedLabel="Chave Pix copiada"
+                      {settlement.to === me.id ? (
+                        <div className="mt-2 flex flex-col gap-2">
+                          {me.pixKey ? (
+                            <CopyTextButton
+                              text={me.pixKey}
+                              label="Copiar minha chave Pix"
+                              copiedLabel="Chave Pix copiada"
+                            />
+                          ) : null}
+                          <ChargeSettlementButton
+                            groupUrl={groupUrl}
+                            groupName={group.name}
+                            payerName={displayName(names, settlement.from, me.id)}
+                            payeeName={displayName(names, settlement.to, me.id)}
+                            amountCents={settlement.amountCents}
+                            payeePixKey={me.pixKey}
                           />
                         </div>
                       ) : null}

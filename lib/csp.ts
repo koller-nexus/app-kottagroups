@@ -28,6 +28,10 @@ export function contentSecurityPolicy({ nonce, apiOrigin, isDev }: PolicyInput):
     `img-src 'self' blob: ${imageSources}`,
     "font-src 'self'",
     "connect-src 'self'",
+    // Com 'strict-dynamic' o 'self' some de script-src, e worker-src cai nele: sem isto o registro
+    // do service worker (specs/029-pwa-installable) pode ser bloqueado.
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

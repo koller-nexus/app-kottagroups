@@ -18,12 +18,16 @@ style-src-attr 'unsafe-inline'
 img-src 'self' blob: <API>
 font-src 'self'
 connect-src 'self'
+worker-src 'self'
+manifest-src 'self'
 object-src 'none'
 base-uri 'self'
 form-action 'self'
 frame-ancestors 'none'
 ```
 
+- `worker-src` e `manifest-src` (spec 029): com `'strict-dynamic'` o `'self'` deixa de valer em
+  `script-src`, de onde `worker-src` herda; a diretiva explícita mantém o service worker registrável.
 - `<N>`: nonce da requisição (24 caracteres base64).
 - `<API>`: `apiOrigin()`; em loopback, `<API> http://localhost:* http://127.0.0.1:*`.
 - Desenvolvimento: `script-src` termina com `'unsafe-eval'`; `style-src` vira

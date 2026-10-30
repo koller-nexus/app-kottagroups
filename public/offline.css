@@ -1,0 +1,79 @@
+/* Espelha DESIGN.md; arquivo estático servido do cache do service worker, fora do Tailwind. */
+:root {
+  --bg: #f1f4ee;
+  --primary: #2f6b4f;
+  --primary-deep: #234f3b;
+  --ink: #18211c;
+  --muted: #56665c;
+  --line: #dce3dc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+main {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+img {
+  width: 96px;
+  height: 96px;
+}
+
+h1 {
+  margin: 16px 0 8px;
+  font-size: 1.5rem;
+}
+
+p {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+button {
+  min-height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--primary-deep);
+}
+
+button:disabled {
+  background: var(--line);
+  color: var(--muted);
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+#status {
+  margin: 16px 0 0;
+  min-height: 1.5em;
+}
